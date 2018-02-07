@@ -47,6 +47,10 @@ class Spline {
         });
     }
 
+    removeLastPoint() {
+        this.points.splice(this.points.length - 1, 1);
+    }
+
     /**
      * Generates a 1-D spline from this.points for a given coordinate (ex: 'i')
      * @param {string} index The coordinate to generate the 1-D spline for (ex: 'j')

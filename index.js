@@ -9,28 +9,56 @@ window.onload = function() {
     canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d');
 
-    canvas.addEventListener("click", function(ev) {
-        spline.addPoint(ev.offsetX, ev.offsetY);
+    width = canvas.width;
+    height = canvas.height;
+
+    canvas.addEventListener("click", addPoint);
+
+    window.addEventListener('resize', function() {
+        ctx.canvas.width = window.innerWidth - 50;
+        ctx.canvas.height = window.innerHeight - 50;
+
         draw();
     });
+
+
+    let undoButton = document.getElementById("undo");
+    undoButton.addEventListener("click", undo);
+
+
+    draw();
+}
+
+
+function addPoint(event) {
+    spline.addPoint(event.offsetX, event.offsetY);
+    draw();
+}
+
+function undo() {
+    spline.removeLastPoint();
     draw();
 }
 
 function draw() {
-    ctx.clearRect(0, 0, width, height);
-    
+
+    ctx.canvas.width = window.innerWidth - 50;
+    ctx.canvas.height = window.innerHeight - 50;
 
     width = canvas.width;
     height = canvas.height;
 
+    ctx.clearRect(0, 0, width, height);
+    
+    ctx.fillStyle = "black";
     spline.points.forEach((point) => {
         drawCircle(point.i, point.j, 3);
     });
 
-
-    ctx.fillStyle = "black";
     drawLine(spline.curve);
 }
+
+
 
 /**
  * 
