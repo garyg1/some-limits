@@ -22,12 +22,13 @@ class Point {
 class Spline {
     constructor() {
         this.points = [];
-        this.numberOfPoints = 0;
     }
 
     addPoint(i, j) {
+        i = Math.floor(i);
+        j = Math.floor(j);
+
         this.points.push(new Point(i, j));
-        this.numberOfPoints++;
     }
 
     /**
@@ -54,73 +55,93 @@ class Spline {
     solveCurve(index) {
         var pts = this.points;
         let n = pts.length - 1; // there are n+1 points
-        var a = 1;
-        var b = 4;
-        var c = 1;
-        var D = [];
-
-        // construct the matrix
-        for (let i = 1; i < n ; i++) {
-            D.push( 3*(pts[i+1][index] - pts[i+1][index]) 
-                - 3*(pts[i][index] - pts[i-1][index]) );
-        }
-
-        // solve
-        var C_ = [c / b];
-        var D_ = [D[0] / b];
-        for (let i = 1; i < n - 1; i++) {
-            C_.push(c / (b - a * C_[i-1]) );
-            D_.push((D[i] - a * D_[i-1]) / (b - a*C_[i-1]));
-        }
-
-
-        // construct solutions 
-        var X_ = new Array(n-1);
-        X_[n-2] = D_[n-2];
-        for (let i = n-3; i >= 0; i--) {
-            X_[i] = D_[i] + C_[i]*X_[i+1];
-        }
-
-        // construct quadratic term C
-        var C = [0];
-        for (let i = 0; i < n-1; i++) {
-            C.push(X_[i]);
-        }
-        C.push(0); // c_n+1 = 0
-
-        // construct a, b, d from quadratic term c
-        var A = [];
-        var B = [];
-        var D = [];
         
+        var a = new Array(n+1);
         for (let i = 0; i < n+1; i++) {
-            A.push(pts[i][index]);
-        }
-        
-        for (let i = 0; i < n; i++) {
-            D.push((C[i+1] + C[i]) / 3);
+            a[i] = pts[i][index];
         }
 
+        var b = new Array(n);
+        
+        var d = new Array(n);
+
+        var h = 1;
+        
+        var r = new Array(n);
         for (let i = 0; i < n; i++) {
-            let b_i = (A[i+1] - A[i]) - C[i] - D[i];
-            B.push(b_i);
+            if (i == 0)
+                r[i] = 3*(a[1] - a[0]);
+            else
+                r[i] = 3*(a[i+1] - a[i]) - 3*(a[i] - a[i-1]);
+        }
+
+        var c = new Array(n+1);
+        var l = new Array(n+1);
+        var m = new Array(n+1);
+        var z = new Array(n+1);
+
+        l[0] = 1;
+        m[0] = 0;
+        z[0] = 0;
+
+        for (let i = 1; i < n; i++) {
+            l[i] = 2*2 - h*m[i-1];
+            m[i] = h / l[i];
+            z[i] = (r[i] - h*z[i-1])/l[i];
+        }
+
+        l[n] = 1;
+        z[n] = 0;
+
+        c[n] = 0;
+        
+        for (let j = n-1; j >= 0; j--) {
+            c[j] = z[j] - m[j]*c[j+1];
+            b[j] = (a[j+1] - a[j])/h - h*(c[j+1] + 2*c[j])/3;
+            d[j] = (c[j+1] - c[j]) / 3 / h;
         }
 
         // package solution
         var solution = [];
         for (let i = 0; i < n; i++) {
-            solution.push([A[i], B[i], C[i], D[i]]);
+            solution.push([a[i], b[i], c[i], d[i]]);
         }
 
         return solution;
     }
 
+    /**
+     * Returns the parameters for this spline in the form
+     * {
+     *   A: a list of n 2-tuples,
+     *   B: a list of n 2-tuples,
+     *   C: a list of n 2-tuples,
+     *   D: a list of n 2-tuples
+     * }
+     */
     get curve() {
-        var solution = [];
+        var curves = [];
 
+        
         ['i', 'j'].forEach((index) => {
-            solution.push(this.solveCurve(index));
+            curves.push(this.solveCurve(index));
         });
+        
+
+        var solution = { A: [], B: [], C: [], D: [] };
+
+        let indices = ['A', 'B', 'C', 'D'];
+
+        for (let i = 0; i < curves[0].length; i++) {
+            for (let j = 0; j < 4; j++) {
+                var coords = [];
+                coords.push(curves[0][i][j]);
+                coords.push(curves[1][i][j]);
+
+
+                solution[indices[j]].push(coords);
+            }
+        }
 
         return solution;
     }
