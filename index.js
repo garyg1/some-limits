@@ -3,6 +3,15 @@ var ctx;
 var width;
 var height;
 
+var selectedPoint;
+var highlightedPoint;
+var pointRadius = 6;
+var distThresh = 20;
+var pointColor = 'white';
+var selectedColor = 'blue';
+var highlightedColor = 'seagreen';
+
+
 var spline = new Spline();
 
 window.onload = function() {
@@ -12,11 +21,17 @@ window.onload = function() {
     width = canvas.width;
     height = canvas.height;
 
-    canvas.addEventListener("click", addPoint);
+    canvas.addEventListener("mousedown", onMouseDown);
+    window.addEventListener("mouseup", onMouseUp)
+    canvas.addEventListener("mousemove", onMouseMove);
+
+    canvas.addEventListener("contextmenu", function(ev) {
+        ev.preventDefault();
+    });
 
     window.addEventListener('resize', function() {
-        ctx.canvas.width = window.innerWidth - 50;
-        ctx.canvas.height = window.innerHeight - 50;
+        ctx.canvas.width = window.innerWidth;
+        ctx.canvas.height = window.innerHeight;
 
         draw();
     });
@@ -25,40 +40,104 @@ window.onload = function() {
     let undoButton = document.getElementById("undo");
     undoButton.addEventListener("click", undo);
 
+    let clearButton = document.getElementById("clear");
+    clearButton.addEventListener("click", clear);
 
-    draw();
+
+    requestAnimationFrame(draw);
+}
+
+/**
+ * 
+ * @param {MouseEvent} event A MouseEvent.
+ */
+function onMouseDown(event) {
+    let target = spline.getNearestPoint(event.offsetX, event.offsetY, distThresh);
+
+    // if right-button pressed
+    if (event.buttons % 4 >= 2) {
+        
+        if (target) {
+            spline.removePoint(target);
+        }
+    }
+
+    else if (event.buttons % 2 == 1) {
+        if (target) {
+            selectedPoint = target;
+        }
+        else {
+            addPoint(event);
+        }
+    }
+
+    requestAnimationFrame(draw);
+}
+
+function onMouseMove(event) {
+    if (selectedPoint) {
+        selectedPoint.i = event.offsetX;
+        selectedPoint.j = event.offsetY;
+    }
+
+    let target = spline.getNearestPoint(event.offsetX, event.offsetY, distThresh);
+    if (target) {
+        highlightedPoint = target;
+    } 
+    else {
+        highlightedPoint = undefined;
+    }
+
+    requestAnimationFrame(draw);
+}
+
+function onMouseUp(event) {
+    selectedPoint = undefined;
+    requestAnimationFrame(draw);
 }
 
 
 function addPoint(event) {
     spline.addPoint(event.offsetX, event.offsetY);
-    draw();
 }
 
 function undo() {
     spline.removeLastPoint();
-    draw();
+    requestAnimationFrame(draw);
+}
+
+function clear() {
+    spline = new Spline();
+    requestAnimationFrame(draw);
 }
 
 function draw() {
 
-    ctx.canvas.width = window.innerWidth - 50;
-    ctx.canvas.height = window.innerHeight - 50;
+    ctx.canvas.width = window.innerWidth;
+    ctx.canvas.height = window.innerHeight;
 
     width = canvas.width;
     height = canvas.height;
 
-    ctx.clearRect(0, 0, width, height);
-    
     ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, width, height);
+    
+    drawLine(spline.curve);
+    
     spline.points.forEach((point) => {
-        drawCircle(point.i, point.j, 3);
+        let color = pointColor;
+        if (point.equals(highlightedPoint)) {
+            color = highlightedColor;
+        }
+
+        if (point.equals(selectedPoint)) {
+            color = selectedColor;
+        }
+          
+        drawCircle(point.i, point.j, pointRadius, color); 
     });
 
-    drawLine(spline.curve);
 }
-
-
 
 /**
  * 
@@ -66,7 +145,8 @@ function draw() {
  * @param {Number} j The j-coordinate of the center.
  * @param {Number} radius The radius.
  */
-function drawCircle(i, j, radius) {
+function drawCircle(i, j, radius, color) {
+    ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(i, j, radius, 0, 2*Math.PI);
     ctx.fill();
@@ -84,7 +164,6 @@ function drawLine(params) {
     var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     var data = imageData.data;
 
-    let step = 0.001;
     for (let n = 0; n < spline.points.length - 1; n++) {
         for (let t = 0; t < 1; t += 0.001) {
             var j = params.A[n][0] + params.B[n][0] * t + params.C[n][0] * t*t + params.D[n][0] * t*t*t;

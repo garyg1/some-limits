@@ -9,10 +9,20 @@ class Point {
      * @param {Point} other
      */
     equals(other) {
+        if (!other) return false;
         if (!other instanceof Point) {
             throw TypeError("Tried to compare a Point to something else!");
         }
         return (this.i === other.i) && (this.j === other.j);
+    }
+
+
+    dist(other) {
+        if (!other instanceof Point) {
+            throw TypeError("Tried to calculate distance between point and something else!");
+        }
+        let norm = Math.pow(this.i - other.i, 2) + Math.pow(this.j - other.j, 2);
+        return Math.pow(norm, 0.5);
     }
 }
 
@@ -47,8 +57,36 @@ class Spline {
         });
     }
 
+    /**
+     * Removes the first instance of target in this spline.
+     * @param {Point} target
+     */
+    removePoint(target) {
+        this.points.some((point, index, array) => {
+            if (target.equals(point)) {
+                array.splice(index, 1);
+                return true;
+            }
+        });
+    }
+
     removeLastPoint() {
         this.points.splice(this.points.length - 1, 1);
+    }
+
+    getNearestPoint(i, j, dist) {
+        var ans;
+        var minDist = 1000000;
+        var target = new Point(i, j);
+        this.points.forEach((point) => {
+            let currDist = target.dist(point);
+            if (currDist <= dist && currDist < minDist) {
+                ans = point;
+                minDist = currDist;
+            } 
+        });
+
+        return ans;
     }
 
     /**
@@ -124,6 +162,8 @@ class Spline {
      * }
      */
     get curve() {
+        if (this.points.length == 0) return;
+        // let t1 = Date.now();
         var curves = [];
 
         
@@ -146,6 +186,8 @@ class Spline {
                 solution[indices[j]].push(coords);
             }
         }
+
+        // console.log(Date.now() - t1);
 
         return solution;
     }
