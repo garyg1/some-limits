@@ -1,3 +1,3 @@
-# Some Limits Rollercoaster Simulator
+# Some Limits Spline Generator
 
-*2-D rollercoaster creator*
+*2-D Spline Generator*
