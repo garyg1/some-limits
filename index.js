@@ -33,7 +33,7 @@ window.onload = function() {
         ctx.canvas.width = window.innerWidth;
         ctx.canvas.height = window.innerHeight;
 
-        draw();
+        window.requestAnimationFrame(draw);
     });
 
 
@@ -48,7 +48,8 @@ window.onload = function() {
 }
 
 /**
- * 
+ * Selects a point currently highlighted on left-click.
+ * Deletes the currently highlighted point on right-click.
  * @param {MouseEvent} event A MouseEvent.
  */
 function onMouseDown(event) {
@@ -56,65 +57,103 @@ function onMouseDown(event) {
 
     // if right-button pressed
     if (event.buttons % 4 >= 2) {
-        
         if (target) {
-            spline.removePoint(target);
-        }
-    }
 
-    else if (event.buttons % 2 == 1) {
-        if (target) {
-            selectedPoint = target;
+            spline.removePoint(target);
+
         }
-        else {
+    } else if (event.buttons % 2 == 1) {
+        if (target) {
+
+            selectedPoint = target;
+        
+        } else {
+
             addPoint(event);
+
         }
     }
 
     requestAnimationFrame(draw);
 }
 
+
+/**
+ * If `selectedPoint`, moves the point with the mouse.
+ * Checks if mousing over a point, and sets it as `highlightedPoint`.
+ * @param {MouseEvent} event 
+ */
 function onMouseMove(event) {
     if (selectedPoint) {
         selectedPoint.i = event.offsetX;
         selectedPoint.j = event.offsetY;
+
+        spline.setcurve();
+        window.requestAnimationFrame(draw);
     }
 
     let target = spline.getNearestPoint(event.offsetX, event.offsetY, distThresh);
-    if (target) {
-        highlightedPoint = target;
-    } 
-    else {
-        highlightedPoint = undefined;
-    }
 
-    requestAnimationFrame(draw);
+    if (target) {
+        if (!target.equals(highlightedPoint)) {
+        
+            highlightedPoint = target;
+            window.requestAnimationFrame(draw);
+
+        }
+    } else if (highlightedPoint) {
+        
+        highlightedPoint = undefined;
+        window.requestAnimationFrame(draw);
+    
+    }
 }
 
+/**
+ * Releases the current `selectedPoint`.
+ * @param {MouseEvent} event A mouse event. 
+ */
 function onMouseUp(event) {
     selectedPoint = undefined;
-    requestAnimationFrame(draw);
+    window.requestAnimationFrame(draw);
 }
 
 
+/**
+ * Adds a point to the spline and redraws.
+ * @param {MouseEvent} event A mouse event.
+ */
 function addPoint(event) {
     spline.addPoint(event.offsetX, event.offsetY);
+    window.requestAnimationFrame(draw);
 }
 
+
+/**
+ * Removes the last point from the spline and redraws.
+ */
 function undo() {
     spline.removeLastPoint();
-    requestAnimationFrame(draw);
+    window.requestAnimationFrame(draw);
 }
 
+/**
+ * Clears the spline and redraws the canvas.
+ */
 function clear() {
     spline = new Spline();
-    requestAnimationFrame(draw);
+    window.requestAnimationFrame(draw);
 }
 
-function draw() {
 
-    ctx.canvas.width = window.innerWidth;
-    ctx.canvas.height = window.innerHeight;
+/**
+ * Draws the canvas.
+ */
+function draw() {
+    if (ctx.canvas.width != window.innerWidth || ctx.canvas.height != window.innerHeight) {
+        ctx.canvas.width = window.innerWidth;
+        ctx.canvas.height = window.innerHeight;
+    }
 
     width = canvas.width;
     height = canvas.height;
@@ -126,6 +165,7 @@ function draw() {
     
     spline.points.forEach((point) => {
         let color = pointColor;
+
         if (point.equals(highlightedPoint)) {
             color = highlightedColor;
         }
@@ -136,11 +176,10 @@ function draw() {
           
         drawCircle(point.i, point.j, pointRadius, color); 
     });
-
 }
 
 /**
- * 
+ * Draws a circle centered at (`i`, `j`) with radius `radius`.
  * @param {Number} i The i-coordinate of the center.
  * @param {Number} j The j-coordinate of the center.
  * @param {Number} radius The radius.
@@ -152,24 +191,33 @@ function drawCircle(i, j, radius, color) {
     ctx.fill();
 }
 
-function putPixel(i, j, data, val) {
+/**
+ * Wrapper around fillRect(j, i, 1, 1)
+ * @param {Number} i 
+ * @param {Number} j 
+ * @param {String} color A valid CSS color. 
+ */
+function putPixel(i, j, color) {
     i = Math.floor(i);
     j = Math.floor(j);
 
-    data[4*(i*width + j)] = val;
-    data[4*(i*width + j) + 3] = 255;
+    ctx.fillStyle = color;
+    ctx.fillRect(j, i, 1, 1);
 }
 
+/**
+ * Draws a cubic spline given by `params`.
+ * @param {`Spline.curve`} params 
+ */
 function drawLine(params) {
-    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var data = imageData.data;
 
     for (let n = 0; n < spline.points.length - 1; n++) {
         for (let t = 0; t < 1; t += 0.001) {
+
             var j = params.A[n][0] + params.B[n][0] * t + params.C[n][0] * t*t + params.D[n][0] * t*t*t;
             var i = params.A[n][1] + params.B[n][1] * t + params.C[n][1] * t*t + params.D[n][1] * t*t*t;
-            putPixel(i, j, data, 255);
+            putPixel(i, j, 'red');
+        
         }
     }
-    ctx.putImageData(imageData, 0, 0);
 }

@@ -6,7 +6,7 @@ html, body {
     font-family: sans-serif;
 }
 
-.button-row {
+.title {
     position: fixed;
     left: 50%;
     top: 20px;
@@ -15,4 +15,12 @@ html, body {
     background-color: rgba(255, 255, 255, 0.2);
     text-align: center;
     border-radius: 10px;
+}
+
+.button-row {
+    padding: 10px;
+}
+
+p {
+    margin: 4px;
 }
