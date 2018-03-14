@@ -1,4 +1,6 @@
 class Point {
+    i: number;
+    j: number;
     constructor(i, j) {
         this.i = i;
         this.j = j;
@@ -10,7 +12,7 @@ class Point {
      */
     equals(other) {
         if (!other) return false;
-        if (!other instanceof Point) {
+        if (!(other instanceof Point)) {
             throw TypeError("Tried to compare a Point to something else!");
         }
         return (this.i === other.i) && (this.j === other.j);
@@ -23,7 +25,7 @@ class Point {
      * @returns {Number} dist The distance (Euclidian) from `this` to `other`
      */
     dist(other) {
-        if (!other instanceof Point) {
+        if (!(other instanceof Point)) {
             throw TypeError("Tried to calculate distance between point and something else!");
         }
         let norm = Math.pow(this.i - other.i, 2) + Math.pow(this.j - other.j, 2);
@@ -35,6 +37,9 @@ class Point {
  * Stores a spline 
  */
 class Spline {
+
+    spline: Object;
+    points: Array<Point>;
 
     /**
      * Initialized an empty spline.
@@ -62,7 +67,7 @@ class Spline {
      * @param {Number} i 
      * @param {Number} j 
      */
-    removePoint(i, j) {
+    removePoint(i: number, j: number) {
         let target = new Point(i, j);
         
         this.points.some((point, index, array) => {
@@ -79,7 +84,7 @@ class Spline {
      * Removes the first instance of target in this spline.
      * @param {Point} target
      */
-    removePoint(target) {
+    removePoint(target: Point) {
         this.points.some((point, index, array) => {
             if (target.equals(point)) {
                 array.splice(index, 1);

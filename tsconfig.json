@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module": "system",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "outDir": "built"
+    },
+    "include": [
+        "src/*"
+    ],
+    "exclude": [
+        "node_modules",
+    ]
+}
