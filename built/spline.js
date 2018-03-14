@@ -6,15 +6,9 @@ var Point = (function () {
     Point.prototype.equals = function (other) {
         if (!other)
             return false;
-        if (!(other instanceof Point)) {
-            throw TypeError("Tried to compare a Point to something else!");
-        }
         return (this.i === other.i) && (this.j === other.j);
     };
     Point.prototype.dist = function (other) {
-        if (!(other instanceof Point)) {
-            throw TypeError("Tried to calculate distance between point and something else!");
-        }
         var norm = Math.pow(this.i - other.i, 2) + Math.pow(this.j - other.j, 2);
         return Math.pow(norm, 0.5);
     };
@@ -30,7 +24,7 @@ var Spline = (function () {
         this.points.push(new Point(i, j));
         this.setcurve();
     };
-    Spline.prototype.removePoint = function (i, j) {
+    Spline.prototype.removePointByCoords = function (i, j) {
         var target = new Point(i, j);
         this.points.some(function (point, index, array) {
             if (target.equals(point)) {
@@ -129,12 +123,8 @@ var Spline = (function () {
         }
         this.spline = solution;
     };
-    Object.defineProperty(Spline.prototype, "curve", {
-        get: function () {
-            return this.spline;
-        },
-        enumerable: true,
-        configurable: true
-    });
+    Spline.prototype.curve = function () {
+        return this.spline;
+    };
     return Spline;
 }());

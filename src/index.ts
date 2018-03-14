@@ -1,21 +1,23 @@
-var canvas;
-var ctx;
-var width;
-var height;
+let canvas: HTMLCanvasElement;
+let ctx: CanvasRenderingContext2D;
+let width: number;
+let height: number;
 
-var selectedPoint;
-var highlightedPoint;
-var pointRadius = 6;
-var distThresh = 20;
-var pointColor = 'white';
-var selectedColor = 'blue';
-var highlightedColor = 'seagreen';
+let selectedPoint: Point;
+let highlightedPoint: Point;
+
+
+const pointRadius: number = 6;
+const distThresh: number = 20;
+const pointColor: string = 'white';
+const selectedColor: string = 'blue';
+const highlightedColor: string = 'seagreen';
 
 
 var spline = new Spline();
 
 window.onload = function() {
-    canvas = document.getElementById('canvas');
+    canvas = <HTMLCanvasElement>document.getElementById('canvas');
     ctx = canvas.getContext('2d');
 
     width = canvas.width;
@@ -37,10 +39,10 @@ window.onload = function() {
     });
 
 
-    let undoButton = document.getElementById("undo");
+    let undoButton: HTMLElement = document.getElementById("undo");
     undoButton.addEventListener("click", undo);
 
-    let clearButton = document.getElementById("clear");
+    let clearButton: HTMLElement = document.getElementById("clear");
     clearButton.addEventListener("click", clear);
 
 
@@ -52,13 +54,12 @@ window.onload = function() {
  * Deletes the currently highlighted point on right-click.
  * @param {MouseEvent} event A MouseEvent.
  */
-function onMouseDown(event) {
+function onMouseDown(event: MouseEvent) {
     let target = spline.getNearestPoint(event.offsetX, event.offsetY, distThresh);
 
     // if right-button pressed
     if (event.buttons % 4 >= 2) {
         if (target) {
-
             spline.removePoint(target);
 
         }
@@ -83,7 +84,7 @@ function onMouseDown(event) {
  * Checks if mousing over a point, and sets it as `highlightedPoint`.
  * @param {MouseEvent} event 
  */
-function onMouseMove(event) {
+function onMouseMove(event: MouseEvent) {
     if (selectedPoint) {
         selectedPoint.i = event.offsetX;
         selectedPoint.j = event.offsetY;
@@ -92,7 +93,7 @@ function onMouseMove(event) {
         window.requestAnimationFrame(draw);
     }
 
-    let target = spline.getNearestPoint(event.offsetX, event.offsetY, distThresh);
+    let target: Point = spline.getNearestPoint(event.offsetX, event.offsetY, distThresh);
 
     if (target) {
         if (!target.equals(highlightedPoint)) {
@@ -109,11 +110,11 @@ function onMouseMove(event) {
     }
 }
 
-/**
+/**oB
  * Releases the current `selectedPoint`.
  * @param {MouseEvent} event A mouse event. 
  */
-function onMouseUp(event) {
+function onMouseUp(event: MouseEvent) {
     selectedPoint = undefined;
     window.requestAnimationFrame(draw);
 }
@@ -123,7 +124,7 @@ function onMouseUp(event) {
  * Adds a point to the spline and redraws.
  * @param {MouseEvent} event A mouse event.
  */
-function addPoint(event) {
+function addPoint(event: MouseEvent) {
     spline.addPoint(event.offsetX, event.offsetY);
     window.requestAnimationFrame(draw);
 }
@@ -161,7 +162,7 @@ function draw() {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, width, height);
     
-    drawLine(spline.curve);
+    drawLine(spline.spline);
     
     spline.points.forEach((point) => {
         let color = pointColor;
@@ -184,7 +185,7 @@ function draw() {
  * @param {Number} j The j-coordinate of the center.
  * @param {Number} radius The radius.
  */
-function drawCircle(i, j, radius, color) {
+function drawCircle(i: number, j: number, radius: number, color: string) {
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(i, j, radius, 0, 2*Math.PI);
@@ -197,7 +198,7 @@ function drawCircle(i, j, radius, color) {
  * @param {Number} j 
  * @param {String} color A valid CSS color. 
  */
-function putPixel(i, j, color) {
+function putPixel(i: number, j: number, color: string) {
     i = Math.floor(i);
     j = Math.floor(j);
 
@@ -207,9 +208,9 @@ function putPixel(i, j, color) {
 
 /**
  * Draws a cubic spline given by `params`.
- * @param {`Spline.curve`} params 
+ * @param {`Spline`} params 
  */
-function drawLine(params) {
+function drawLine(params: Solution) {
 
     for (let n = 0; n < spline.points.length - 1; n++) {
         for (let t = 0; t < 1; t += 0.001) {

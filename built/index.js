@@ -93,7 +93,7 @@ function draw() {
     height = canvas.height;
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, width, height);
-    drawLine(spline.curve);
+    drawLine(spline.spline);
     spline.points.forEach(function (point) {
         var color = pointColor;
         if (point.equals(highlightedPoint)) {
