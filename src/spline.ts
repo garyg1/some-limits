@@ -116,19 +116,81 @@ class Spline {
      * 
      * @returns {Point} point The nearest point, or `undefined`.
      */
-    getNearestPoint(i: number, j: number, dist: number) {
-        var ans;
+    getNearestPoint(i: number, j: number, dist: number): Point {
+        var index = this.getNearestPointByIndex(i, j, dist);
+
+        if (index == -1) return undefined;
+        return this.points[index];
+    }
+
+    getNearestPointByIndex(i: number, j: number, dist: number): number {
+        var minIndex: number = -1;
         var minDist = 1000000;
         var target = new Point(i, j);
-        this.points.forEach((point) => {
+        this.points.forEach((point, index) => {
             let currDist = target.dist(point);
             if (currDist <= dist && currDist < minDist) {
-                ans = point;
+                minIndex = index;
                 minDist = currDist;
-            } 
+            }
         });
 
-        return ans;
+        return minIndex;
+    }
+
+    /**
+     * Inserts this point between the closest point and its closest
+     * neighbor.
+     * @param i 
+     * @param j 
+     */
+    insertPoint(i: number, j: number) {
+        var closestPointIndex: number = this.getNearestPointByIndex(i, j, Infinity);
+        var newPoint = new Point(i, j);
+
+        // there was no closest point, so just add this point to the end
+        if (closestPointIndex == -1) {
+            this.addPoint(i, j);
+            return;
+        }
+        
+        var closestPoint: Point = this.points[closestPointIndex];
+        
+        // if closest point is the last point, and there is a point before it
+        if (this.points.length === closestPointIndex + 1 && closestPointIndex >= 1) {
+            var nextToLastPoint: Point = this.points[closestPointIndex - 1];
+            
+            // if 'between' closestPoint and nextToLastPoint, insert between them
+            if (nextToLastPoint.dist(newPoint) < nextToLastPoint.dist(closestPoint)) {
+                this.points.splice(closestPointIndex, 0, newPoint);
+            } else {
+                this.addPoint(i, j);
+                return;
+            }
+        
+        } else if (this.points.length == closestPointIndex + 1) {
+            this.addPoint(i, j);
+            return;
+        } else if (closestPointIndex === 0 && this.points.length > 1) {
+            var secondPoint: Point = this.points[1];
+
+            if (secondPoint.dist(newPoint) < secondPoint.dist(closestPoint)) {
+                this.points.splice(1, 0, newPoint);
+            } else {
+                this.points.splice(0, 0, newPoint);
+            }
+        } else {
+            var pointBefore: Point = this.points[closestPointIndex - 1];
+            var pointAfter: Point = this.points[closestPointIndex + 1];
+
+            if (pointAfter.dist(newPoint) < pointBefore.dist(newPoint)) {
+                this.points.splice(closestPointIndex + 1, 0, newPoint);
+            } else {
+                this.points.splice(closestPointIndex, 0, newPoint);
+            }
+        }
+
+        this.setcurve();
     }
 
     /**

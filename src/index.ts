@@ -7,11 +7,13 @@ let selectedPoint: Point;
 let highlightedPoint: Point;
 
 
-const pointRadius: number = 6;
+const pointRadius: number = 12;
 const distThresh: number = 20;
-const pointColor: string = 'white';
-const selectedColor: string = 'blue';
-const highlightedColor: string = 'seagreen';
+const pointColor: string = 'rgba(255, 255, 255, 1)';
+const selectedColor: string = 'rgba(255, 255, 255, 0.33)';
+const highlightedColor: string = 'rgba(255, 255, 255, 0.66)';
+const backgroundColor: string = 'seagreen';
+const splineColor: string = 'white';
 
 
 var spline = new Spline();
@@ -62,14 +64,14 @@ function onMouseDown(event: MouseEvent) {
         if (target) {
             spline.removePoint(target);
 
+        } else {
+            insertPoint(event);
         }
     } else if (event.buttons % 2 == 1) {
         if (target) {
-
             selectedPoint = target;
         
         } else {
-
             addPoint(event);
 
         }
@@ -129,6 +131,11 @@ function addPoint(event: MouseEvent) {
     window.requestAnimationFrame(draw);
 }
 
+function insertPoint(event: MouseEvent) {
+    spline.insertPoint(event.offsetX, event.offsetY);
+    window.requestAnimationFrame(draw);
+}
+
 
 /**
  * Removes the last point from the spline and redraws.
@@ -159,7 +166,7 @@ function draw() {
     width = canvas.width;
     height = canvas.height;
 
-    ctx.fillStyle = "black";
+    ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
     
     drawLine(spline.spline);
@@ -217,7 +224,7 @@ function drawLine(params: Solution) {
 
             var j = params.A[n][0] + params.B[n][0] * t + params.C[n][0] * t*t + params.D[n][0] * t*t*t;
             var i = params.A[n][1] + params.B[n][1] * t + params.C[n][1] * t*t + params.D[n][1] * t*t*t;
-            putPixel(i, j, 'red');
+            putPixel(i, j, splineColor);
         
         }
     }

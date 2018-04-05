@@ -4,11 +4,13 @@ var width;
 var height;
 var selectedPoint;
 var highlightedPoint;
-var pointRadius = 6;
+var pointRadius = 12;
 var distThresh = 20;
-var pointColor = 'white';
-var selectedColor = 'blue';
-var highlightedColor = 'seagreen';
+var pointColor = 'rgba(255, 255, 255, 1)';
+var selectedColor = 'rgba(255, 255, 255, 0.33)';
+var highlightedColor = 'rgba(255, 255, 255, 0.66)';
+var backgroundColor = 'seagreen';
+var splineColor = 'white';
 var spline = new Spline();
 window.onload = function () {
     canvas = document.getElementById('canvas');
@@ -37,6 +39,9 @@ function onMouseDown(event) {
     if (event.buttons % 4 >= 2) {
         if (target) {
             spline.removePoint(target);
+        }
+        else {
+            insertPoint(event);
         }
     }
     else if (event.buttons % 2 == 1) {
@@ -76,6 +81,10 @@ function addPoint(event) {
     spline.addPoint(event.offsetX, event.offsetY);
     window.requestAnimationFrame(draw);
 }
+function insertPoint(event) {
+    spline.insertPoint(event.offsetX, event.offsetY);
+    window.requestAnimationFrame(draw);
+}
 function undo() {
     spline.removeLastPoint();
     window.requestAnimationFrame(draw);
@@ -91,7 +100,7 @@ function draw() {
     }
     width = canvas.width;
     height = canvas.height;
-    ctx.fillStyle = "black";
+    ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
     drawLine(spline.spline);
     spline.points.forEach(function (point) {
@@ -122,7 +131,7 @@ function drawLine(params) {
         for (var t = 0; t < 1; t += 0.001) {
             var j = params.A[n][0] + params.B[n][0] * t + params.C[n][0] * t * t + params.D[n][0] * t * t * t;
             var i = params.A[n][1] + params.B[n][1] * t + params.C[n][1] * t * t + params.D[n][1] * t * t * t;
-            putPixel(i, j, 'red');
+            putPixel(i, j, splineColor);
         }
     }
 }

@@ -48,17 +48,66 @@ var Spline = (function () {
         this.setcurve();
     };
     Spline.prototype.getNearestPoint = function (i, j, dist) {
-        var ans;
+        var index = this.getNearestPointByIndex(i, j, dist);
+        if (index == -1)
+            return undefined;
+        return this.points[index];
+    };
+    Spline.prototype.getNearestPointByIndex = function (i, j, dist) {
+        var minIndex = -1;
         var minDist = 1000000;
         var target = new Point(i, j);
-        this.points.forEach(function (point) {
+        this.points.forEach(function (point, index) {
             var currDist = target.dist(point);
             if (currDist <= dist && currDist < minDist) {
-                ans = point;
+                minIndex = index;
                 minDist = currDist;
             }
         });
-        return ans;
+        return minIndex;
+    };
+    Spline.prototype.insertPoint = function (i, j) {
+        var closestPointIndex = this.getNearestPointByIndex(i, j, Infinity);
+        var newPoint = new Point(i, j);
+        if (closestPointIndex == -1) {
+            this.addPoint(i, j);
+            return;
+        }
+        var closestPoint = this.points[closestPointIndex];
+        if (this.points.length === closestPointIndex + 1 && closestPointIndex >= 1) {
+            var nextToLastPoint = this.points[closestPointIndex - 1];
+            if (nextToLastPoint.dist(newPoint) < nextToLastPoint.dist(closestPoint)) {
+                this.points.splice(closestPointIndex, 0, newPoint);
+            }
+            else {
+                this.addPoint(i, j);
+                return;
+            }
+        }
+        else if (this.points.length == closestPointIndex + 1) {
+            this.addPoint(i, j);
+            return;
+        }
+        else if (closestPointIndex === 0 && this.points.length > 1) {
+            var secondPoint = this.points[1];
+            if (secondPoint.dist(newPoint) < secondPoint.dist(closestPoint)) {
+                this.points.splice(1, 0, newPoint);
+            }
+            else {
+                this.points.splice(0, 0, newPoint);
+            }
+        }
+        else {
+            var pointBefore = this.points[closestPointIndex - 1];
+            var pointAfter = this.points[closestPointIndex + 1];
+            if (pointAfter.dist(newPoint) < pointBefore.dist(newPoint)) {
+                this.points.splice(closestPointIndex + 1, 0, newPoint);
+            }
+            else {
+                this.points.splice(closestPointIndex, 0, newPoint);
+            }
+        }
+        this.setcurve();
     };
     Spline.prototype.solveCurve = function (index) {
         var pts = this.points;
