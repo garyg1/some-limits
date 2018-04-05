@@ -17,6 +17,22 @@ html, body {
     border-radius: 10px;
 }
 
+.title:not(.hidden) #show {
+    display: none;
+}
+
+.title.hidden > h1, .title.hidden > p, .title.hidden button {
+    display: none;
+}
+
+.title.hidden {
+    padding: 0px;
+}
+
+.title.hidden #show {
+    display: block;
+}
+
 .button-row {
     padding: 10px;
 }

@@ -6,6 +6,8 @@ let height: number;
 let selectedPoint: Point;
 let highlightedPoint: Point;
 
+let menuHidden: boolean = false;
+let menu: HTMLElement;
 
 const pointRadius: number = 12;
 const distThresh: number = 20;
@@ -16,11 +18,14 @@ const backgroundColor: string = 'seagreen';
 const splineColor: string = 'white';
 
 
+
 var spline = new Spline();
 
 window.onload = function() {
     canvas = <HTMLCanvasElement>document.getElementById('canvas');
     ctx = canvas.getContext('2d');
+
+    menu = document.getElementById("menu");
 
     width = canvas.width;
     height = canvas.height;
@@ -40,15 +45,27 @@ window.onload = function() {
         window.requestAnimationFrame(draw);
     });
 
+    let hideButton: HTMLElement = document.getElementById("hide");
+    hideButton.addEventListener("click", showHideMenu);
 
-    let undoButton: HTMLElement = document.getElementById("undo");
-    undoButton.addEventListener("click", undo);
+    let showButton: HTMLElement = this.document.getElementById("show");
+    showButton.addEventListener("click", showHideMenu);
 
     let clearButton: HTMLElement = document.getElementById("clear");
     clearButton.addEventListener("click", clear);
 
 
     requestAnimationFrame(draw);
+}
+
+function showHideMenu() {
+    menuHidden = !menuHidden;
+
+    if (menuHidden) {
+        menu.classList.add("hidden");
+    } else {
+        menu.classList.remove("hidden");
+    }
 }
 
 /**

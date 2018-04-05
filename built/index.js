@@ -4,6 +4,8 @@ var width;
 var height;
 var selectedPoint;
 var highlightedPoint;
+var menuHidden = false;
+var menu;
 var pointRadius = 12;
 var distThresh = 20;
 var pointColor = 'rgba(255, 255, 255, 1)';
@@ -15,6 +17,7 @@ var spline = new Spline();
 window.onload = function () {
     canvas = document.getElementById('canvas');
     ctx = canvas.getContext('2d');
+    menu = document.getElementById("menu");
     width = canvas.width;
     height = canvas.height;
     canvas.addEventListener("mousedown", onMouseDown);
@@ -28,12 +31,23 @@ window.onload = function () {
         ctx.canvas.height = window.innerHeight;
         window.requestAnimationFrame(draw);
     });
-    var undoButton = document.getElementById("undo");
-    undoButton.addEventListener("click", undo);
+    var hideButton = document.getElementById("hide");
+    hideButton.addEventListener("click", showHideMenu);
+    var showButton = this.document.getElementById("show");
+    showButton.addEventListener("click", showHideMenu);
     var clearButton = document.getElementById("clear");
     clearButton.addEventListener("click", clear);
     requestAnimationFrame(draw);
 };
+function showHideMenu() {
+    menuHidden = !menuHidden;
+    if (menuHidden) {
+        menu.classList.add("hidden");
+    }
+    else {
+        menu.classList.remove("hidden");
+    }
+}
 function onMouseDown(event) {
     var target = spline.getNearestPoint(event.offsetX, event.offsetY, distThresh);
     if (event.buttons % 4 >= 2) {
