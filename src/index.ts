@@ -37,6 +37,12 @@ window.onload = function() {
     canvas.addEventListener("mousedown", onMouseDown);
     window.addEventListener("mouseup", onMouseUp)
     canvas.addEventListener("mousemove", onMouseMove);
+    canvas.addEventListener("mouseout", function(e) {
+        selectedPoint = undefined;
+        highlightedPoint = undefined;
+        selectedCurveIndex = -1;
+        window.requestAnimationFrame(draw);
+    });
 
     canvas.addEventListener("touchstart", onTouchDown);
     canvas.addEventListener("touchend", onTouchUp);

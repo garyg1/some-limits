@@ -145,26 +145,29 @@ class Spline {
         const minCurveIndex: number = minCurve.index;
         const minCurveDist: number = minCurve.dist;
 
-        // if no min curve found, add to the end
-        if (minCurveIndex == -1) {
+        if (minCurveIndex == -1 || minCurveIndex == -3) {
+            // add to end
             this.addPoint(i, j);
-        
+        } else if (minCurveIndex == -2) {
+            // add to front
+            this.points.splice(0, 0, new Point(i, j));
         } else {
+            // there is a min curve, so insert there.
             this.points.splice(minCurveIndex + 1, 0, new Point(i, j));
-            this.setcurve();
         }
+        this.setcurve();
     }
 
     /**
      * Returns a MinCurve {index, dist} of the spline piece closest
-     * to the point (x, y).
+     * to the point (x, y). Index will be -2 if off the front end, and -3 if off the back end of the spline.
      * @param x The first coordinate of point in question
      * @param y The second coordinate of point in question
      */
     getNearestCurve(x: number, y: number): MinCurve {
 
         const TOLERANCE = 0.05;
-        const MAX_DIST = 40;
+        const MAX_DIST = 200;
 
         // calculate minimum distance spline segment
         
@@ -235,6 +238,16 @@ class Spline {
                 minCurveIndex = index;
             }
         });
+
+        if (minCurveIndex == 0) {
+            if (this.points[0].dist(new Point(x, y)) <= 1 + Math.pow(minDistSq, 0.5)) {
+                minCurveIndex = -2;
+            }
+        } else if (minCurveIndex == this.points.length - 2) {
+            if (this.points[this.points.length - 1].dist(new Point(x, y)) <= 1 + Math.pow(minDistSq, 0.5)) {
+                minCurveIndex = -3;
+            }
+        }
 
         if (minDistSq < Math.pow(MAX_DIST, 2)) {
             return {index: minCurveIndex, dist: Math.pow(minDistSq, 0.5)};

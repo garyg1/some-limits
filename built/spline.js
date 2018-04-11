@@ -75,17 +75,20 @@ var Spline = (function () {
         var minCurve = this.getNearestCurve(i, j);
         var minCurveIndex = minCurve.index;
         var minCurveDist = minCurve.dist;
-        if (minCurveIndex == -1) {
+        if (minCurveIndex == -1 || minCurveIndex == -3) {
             this.addPoint(i, j);
+        }
+        else if (minCurveIndex == -2) {
+            this.points.splice(0, 0, new Point(i, j));
         }
         else {
             this.points.splice(minCurveIndex + 1, 0, new Point(i, j));
-            this.setcurve();
         }
+        this.setcurve();
     };
     Spline.prototype.getNearestCurve = function (x, y) {
         var TOLERANCE = 0.05;
-        var MAX_DIST = 40;
+        var MAX_DIST = 200;
         var minDistSq = Number.MAX_VALUE;
         var minCurveIndex = -1;
         this.spline.curves.forEach(function (curve, index) {
@@ -133,6 +136,16 @@ var Spline = (function () {
                 minCurveIndex = index;
             }
         });
+        if (minCurveIndex == 0) {
+            if (this.points[0].dist(new Point(x, y)) <= 1 + Math.pow(minDistSq, 0.5)) {
+                minCurveIndex = -2;
+            }
+        }
+        else if (minCurveIndex == this.points.length - 2) {
+            if (this.points[this.points.length - 1].dist(new Point(x, y)) <= 1 + Math.pow(minDistSq, 0.5)) {
+                minCurveIndex = -3;
+            }
+        }
         if (minDistSq < Math.pow(MAX_DIST, 2)) {
             return { index: minCurveIndex, dist: Math.pow(minDistSq, 0.5) };
         }
