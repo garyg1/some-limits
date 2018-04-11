@@ -85,7 +85,7 @@ var Spline = (function () {
     };
     Spline.prototype.getNearestCurve = function (x, y) {
         var TOLERANCE = 0.05;
-        var MAX_DIST = 100;
+        var MAX_DIST = 40;
         var minDistSq = Number.MAX_VALUE;
         var minCurveIndex = -1;
         this.spline.curves.forEach(function (curve, index) {
@@ -102,12 +102,20 @@ var Spline = (function () {
                 k1 += 2 * a0[d] * curve.a1[d];
                 k0 += Math.pow(a0[d], 2);
             }
-            var computedRoots = findRoots([k1, k2 * 2, k3 * 3, k4 * 4, k5 * 5, k6 * 6]);
             var pointsToCheck = [0, 1];
-            for (var i = 0; i < computedRoots[0].length; i++) {
-                if (Math.abs(computedRoots[1][i]) < TOLERANCE
-                    && computedRoots[0][i] >= 0 && computedRoots[0][i] <= 1) {
-                    pointsToCheck.push(computedRoots[0][i]);
+            if (k3 == k4 && k4 == k5 && k5 == k6 && k6 == 0) {
+                var t = -0.5 * k1 / k2;
+                if (t <= 1 && t >= 0) {
+                    pointsToCheck.push(t);
+                }
+            }
+            else {
+                var computedRoots = findRoots([k1, k2 * 2, k3 * 3, k4 * 4, k5 * 5, k6 * 6]);
+                for (var i = 0; i < computedRoots[0].length; i++) {
+                    if (Math.abs(computedRoots[1][i]) < TOLERANCE
+                        && computedRoots[0][i] >= 0 && computedRoots[0][i] <= 1) {
+                        pointsToCheck.push(computedRoots[0][i]);
+                    }
                 }
             }
             var localMin = Number.MAX_VALUE;

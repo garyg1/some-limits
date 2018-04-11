@@ -5,20 +5,23 @@ let height: number;
 
 let selectedPoint: Point;
 let highlightedPoint: Point;
-
 let selectedCurveIndex: number;
-let selectedSplineColor: string = 'black';
+
 
 let menuHidden: boolean = false;
 let menu: HTMLElement;
 
-const pointRadius: number = 12;
-const distThresh: number = 20;
-const pointColor: string = 'rgba(255, 255, 255, 1)';
-const selectedColor: string = 'rgba(255, 255, 255, 0.33)';
-const highlightedColor: string = 'rgba(255, 255, 255, 0.66)';
+const pointRadius: number = 8;
+const distThresh: number = 40;
+
 const backgroundColor: string = 'seagreen';
+
+const pointColor: string = 'rgba(255, 255, 255, 1)';
+const highlightedColor: string = 'rgba(255, 255, 255, 0.5)';
+const selectedColor: string = 'rgba(255, 255, 255, 0.33)';
+
 const splineColor: string = 'white';
+let selectedSplineColor: string = 'rgba(255, 255, 255, 0.5)';
 
 var spline = new Spline();
 
@@ -36,8 +39,8 @@ window.onload = function() {
     canvas.addEventListener("mousemove", onMouseMove);
 
     canvas.addEventListener("touchstart", onTouchDown);
-    window.addEventListener("touchend", onTouchUp);
-    window.addEventListener("touchcancel", onTouchUp);
+    canvas.addEventListener("touchend", onTouchUp);
+    canvas.addEventListener("touchcancel", onTouchUp);
     canvas.addEventListener("touchmove", onTouchMove);
 
     canvas.addEventListener("contextmenu", function(ev) {
@@ -81,9 +84,12 @@ function showHideMenu() {
  */
 function onMouseDown(event: MouseEvent) {
     handleMouseDown(event.offsetX, event.offsetY, event.buttons);
+    handleMouseMove(event.offsetX, event.offsetY, false); // calls draw()
 }
 
 function onTouchDown(event: TouchEvent) {
+    event.preventDefault(); // prevent mouse events
+
     const touches: TouchList = event.touches;
     handleMouseDown(touches[0].clientX, touches[0].clientY);
 }
@@ -111,8 +117,6 @@ function handleMouseDown(x: number, y: number, buttons?: number) {
 
         }
     }
-
-    requestAnimationFrame(draw);
 }
 
 
@@ -126,12 +130,13 @@ function onMouseMove(event: MouseEvent) {
 }
 
 function onTouchMove(event: TouchEvent) {
+    event.preventDefault(); // prevent mouse events
+
     const touches: TouchList = event.touches;
     handleMouseMove(touches[0].clientX, touches[0].clientY, true);
 }
 
 function handleMouseMove(x: number, y: number, isTouchEvent: boolean) {
-    console.log("MOUSEMOVE:", isTouchEvent);
     let doDraw: boolean = false;
     
     if (isTouchEvent) {
@@ -155,7 +160,7 @@ function handleMouseMove(x: number, y: number, isTouchEvent: boolean) {
 
     let target: Point = spline.getNearestPoint(x, y, distThresh);
 
-    if (target) {
+    if (target && !isTouchEvent) {
         if (!target.equals(highlightedPoint)) {
             highlightedPoint = target;
             doDraw = true;
@@ -174,15 +179,18 @@ function handleMouseMove(x: number, y: number, isTouchEvent: boolean) {
  * Releases the current `selectedPoint`.
  * @param {MouseEvent} event A mouse event. 
  */
-function onMouseUp() {
+function onMouseUp(event: MouseEvent) {
     selectedPoint = undefined;
-    window.requestAnimationFrame(draw);
+    handleMouseMove(event.offsetX, event.offsetY, false); // this also call draw()
 }
 
-function onTouchUp() {
-    console.log("TOUCHUP", selectedCurveIndex);
+function onTouchUp(event: TouchEvent) {
+    event.preventDefault(); // prevent mouse events
+
     selectedPoint = undefined;
+    highlightedPoint = undefined;
     selectedCurveIndex = -1;
+
     window.requestAnimationFrame(draw);
 }
 
@@ -259,6 +267,9 @@ function putPixel(i: number, j: number, color: string) {
     i = Math.floor(i);
     j = Math.floor(j);
 
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(j, i, 1, 1);
+
     ctx.fillStyle = color;
     ctx.fillRect(j, i, 1, 1);
 }
@@ -272,7 +283,7 @@ function drawLine(solution: Solution) {
     for (let n = 0; n < solution.curves.length; n++) {
         
         let color: string = splineColor;
-        if (n == selectedCurveIndex) {
+        if (!highlightedPoint && n == selectedCurveIndex) {
             color = selectedSplineColor;
         }
 

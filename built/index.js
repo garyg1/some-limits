@@ -5,16 +5,16 @@ var height;
 var selectedPoint;
 var highlightedPoint;
 var selectedCurveIndex;
-var selectedSplineColor = 'black';
 var menuHidden = false;
 var menu;
-var pointRadius = 12;
-var distThresh = 20;
-var pointColor = 'rgba(255, 255, 255, 1)';
-var selectedColor = 'rgba(255, 255, 255, 0.33)';
-var highlightedColor = 'rgba(255, 255, 255, 0.66)';
+var pointRadius = 8;
+var distThresh = 40;
 var backgroundColor = 'seagreen';
+var pointColor = 'rgba(255, 255, 255, 1)';
+var highlightedColor = 'rgba(255, 255, 255, 0.5)';
+var selectedColor = 'rgba(255, 255, 255, 0.33)';
 var splineColor = 'white';
+var selectedSplineColor = 'rgba(255, 255, 255, 0.5)';
 var spline = new Spline();
 window.onload = function () {
     canvas = document.getElementById('canvas');
@@ -26,8 +26,8 @@ window.onload = function () {
     window.addEventListener("mouseup", onMouseUp);
     canvas.addEventListener("mousemove", onMouseMove);
     canvas.addEventListener("touchstart", onTouchDown);
-    window.addEventListener("touchend", onTouchUp);
-    window.addEventListener("touchcancel", onTouchUp);
+    canvas.addEventListener("touchend", onTouchUp);
+    canvas.addEventListener("touchcancel", onTouchUp);
     canvas.addEventListener("touchmove", onTouchMove);
     canvas.addEventListener("contextmenu", function (ev) {
         ev.preventDefault();
@@ -56,8 +56,10 @@ function showHideMenu() {
 }
 function onMouseDown(event) {
     handleMouseDown(event.offsetX, event.offsetY, event.buttons);
+    handleMouseMove(event.offsetX, event.offsetY, false);
 }
 function onTouchDown(event) {
+    event.preventDefault();
     var touches = event.touches;
     handleMouseDown(touches[0].clientX, touches[0].clientY);
 }
@@ -79,18 +81,16 @@ function handleMouseDown(x, y, buttons) {
             spline.addPoint(x, y);
         }
     }
-    requestAnimationFrame(draw);
 }
 function onMouseMove(event) {
-    console.log("ON MOUSE MOVE", event.buttons);
     handleMouseMove(event.offsetX, event.offsetY, false);
 }
 function onTouchMove(event) {
+    event.preventDefault();
     var touches = event.touches;
     handleMouseMove(touches[0].clientX, touches[0].clientY, true);
 }
 function handleMouseMove(x, y, isTouchEvent) {
-    console.log("MOUSEMOVE:", isTouchEvent);
     var doDraw = false;
     if (isTouchEvent) {
         selectedCurveIndex = -1;
@@ -109,7 +109,7 @@ function handleMouseMove(x, y, isTouchEvent) {
         doDraw = true;
     }
     var target = spline.getNearestPoint(x, y, distThresh);
-    if (target) {
+    if (target && !isTouchEvent) {
         if (!target.equals(highlightedPoint)) {
             highlightedPoint = target;
             doDraw = true;
@@ -122,13 +122,14 @@ function handleMouseMove(x, y, isTouchEvent) {
     if (doDraw)
         window.requestAnimationFrame(draw);
 }
-function onMouseUp() {
+function onMouseUp(event) {
     selectedPoint = undefined;
-    window.requestAnimationFrame(draw);
+    handleMouseMove(event.offsetX, event.offsetY, false);
 }
-function onTouchUp() {
-    console.log("TOUCHUP", selectedCurveIndex);
+function onTouchUp(event) {
+    event.preventDefault();
     selectedPoint = undefined;
+    highlightedPoint = undefined;
     selectedCurveIndex = -1;
     window.requestAnimationFrame(draw);
 }
@@ -170,13 +171,15 @@ function drawCircle(i, j, radius, color) {
 function putPixel(i, j, color) {
     i = Math.floor(i);
     j = Math.floor(j);
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(j, i, 1, 1);
     ctx.fillStyle = color;
     ctx.fillRect(j, i, 1, 1);
 }
 function drawLine(solution) {
     for (var n = 0; n < solution.curves.length; n++) {
         var color = splineColor;
-        if (n == selectedCurveIndex) {
+        if (!highlightedPoint && n == selectedCurveIndex) {
             color = selectedSplineColor;
         }
         for (var t = 0; t < 1; t += 0.001) {

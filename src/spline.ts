@@ -164,7 +164,7 @@ class Spline {
     getNearestCurve(x: number, y: number): MinCurve {
 
         const TOLERANCE = 0.05;
-        const MAX_DIST = 100;
+        const MAX_DIST = 40;
 
         // calculate minimum distance spline segment
         
@@ -195,14 +195,26 @@ class Spline {
             }
 
             // 'differentiate' and find roots
-            const computedRoots = findRoots([k1, k2*2, k3*3, k4*4, k5*5, k6*6]);
             const pointsToCheck = [0, 1];
-
-            for (let i = 0; i < computedRoots[0].length; i++) {
-                // if imaginary part is less than TOLERANCE
-                if (Math.abs(computedRoots[1][i]) < TOLERANCE 
-                    && computedRoots[0][i] >= 0 && computedRoots[0][i] <= 1) {
-                    pointsToCheck.push(computedRoots[0][i]);
+            
+            // if just a line, the min is just -k1 / (2*k2)
+            if (k3 == k4 && k4 == k5 && k5 == k6 && k6 == 0) {
+                const t: number = -0.5 * k1 / k2 ;
+                if (t <= 1 && t >= 0) {
+                    pointsToCheck.push(t);
+                }
+            }
+            
+            // otherwise compute critical points with
+            // durand kerner
+            else {
+                const computedRoots = findRoots([k1, k2*2, k3*3, k4*4, k5*5, k6*6]);
+                for (let i = 0; i < computedRoots[0].length; i++) {
+                    // if imaginary part is less than TOLERANCE
+                    if (Math.abs(computedRoots[1][i]) < TOLERANCE
+                        && computedRoots[0][i] >= 0 && computedRoots[0][i] <= 1) {
+                        pointsToCheck.push(computedRoots[0][i]);
+                    }
                 }
             }
 
