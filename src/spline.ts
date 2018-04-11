@@ -29,20 +29,12 @@ class Point {
     }
 }
 
-interface Solution {
-    A: number[][];
-    B: number[][];
-    C: number[][];
-    D: number[][];
-    [key: string]: number[][];
-}
-
 /**
  * Stores a spline 
  */
 class Spline {
 
-    spline: any;
+    spline: Solution;
     points: Array<Point>;
 
     /**
@@ -50,6 +42,7 @@ class Spline {
      */
     constructor() {
         this.points = [];
+        this.spline = <Solution> { curves: [] };
     }
 
     /**
@@ -138,59 +131,104 @@ class Spline {
         return minIndex;
     }
 
-    /**
-     * Inserts this point between the closest point and its closest
-     * neighbor.
-     * @param i 
-     * @param j 
-     */
+    /** First calculates the closest spline segment to (x, y), 
+     * then adds a new Point at (x, y) between the segment's endpoints.  */
     insertPoint(i: number, j: number) {
-        var closestPointIndex: number = this.getNearestPointByIndex(i, j, Infinity);
-        var newPoint = new Point(i, j);
-
-        // there was no closest point, so just add this point to the end
-        if (closestPointIndex == -1) {
+        // don't do computations if there are no points
+        if (this.points.length == 0) {
             this.addPoint(i, j);
             return;
         }
-        
-        var closestPoint: Point = this.points[closestPointIndex];
-        
-        // if closest point is the last point, and there is a point before it
-        if (this.points.length === closestPointIndex + 1 && closestPointIndex >= 1) {
-            var nextToLastPoint: Point = this.points[closestPointIndex - 1];
-            
-            // if 'between' closestPoint and nextToLastPoint, insert between them
-            if (nextToLastPoint.dist(newPoint) < nextToLastPoint.dist(closestPoint)) {
-                this.points.splice(closestPointIndex, 0, newPoint);
-            } else {
-                this.addPoint(i, j);
-                return;
-            }
-        
-        } else if (this.points.length == closestPointIndex + 1) {
-            this.addPoint(i, j);
-            return;
-        } else if (closestPointIndex === 0 && this.points.length > 1) {
-            var secondPoint: Point = this.points[1];
 
-            if (secondPoint.dist(newPoint) < secondPoint.dist(closestPoint)) {
-                this.points.splice(1, 0, newPoint);
-            } else {
-                this.points.splice(0, 0, newPoint);
-            }
+        const minCurve: MinCurve = this.getNearestCurve(i, j);
+        
+        const minCurveIndex: number = minCurve.index;
+        const minCurveDist: number = minCurve.dist;
+
+        // if no min curve found, add to the end
+        if (minCurveIndex == -1) {
+            this.addPoint(i, j);
+        
         } else {
-            var pointBefore: Point = this.points[closestPointIndex - 1];
-            var pointAfter: Point = this.points[closestPointIndex + 1];
-
-            if (pointAfter.dist(newPoint) < pointBefore.dist(newPoint)) {
-                this.points.splice(closestPointIndex + 1, 0, newPoint);
-            } else {
-                this.points.splice(closestPointIndex, 0, newPoint);
-            }
+            this.points.splice(minCurveIndex + 1, 0, new Point(i, j));
+            this.setcurve();
         }
+    }
 
-        this.setcurve();
+    /**
+     * Returns a MinCurve {index, dist} of the spline piece closest
+     * to the point (x, y).
+     * @param x The first coordinate of point in question
+     * @param y The second coordinate of point in question
+     */
+    getNearestCurve(x: number, y: number): MinCurve {
+
+        const TOLERANCE = 0.05;
+        const MAX_DIST = 100;
+
+        // calculate minimum distance spline segment
+        
+        let minDistSq = Number.MAX_VALUE;
+        let minCurveIndex = -1;
+
+        // iterate through each spline segment, 
+        // and calculate min distance from segment to Point(x, y)
+        this.spline.curves.forEach((curve, index) => {
+           
+            // calculate constants in square distance formula
+            let k0: number, k1: number, k2: number, k3: number;
+            let k4: number, k5: number, k6: number;
+
+            k0 = k1 = k2 = k3 = k4 = k5 = k6 = 0;
+
+            let a0 = [curve.a0[0] - x, curve.a0[1] - y];
+
+            // iterate through each dimension (i.e., curve.a0 = [a0x, a0y])
+            for (let d = 0; d < 2; d++) {
+                k6 += Math.pow(curve.a3[d], 2);
+                k5 += 2*curve.a2[d]*curve.a3[d];
+                k4 += Math.pow(curve.a2[d], 2) +  2*curve.a1[d]*curve.a3[d];
+                k3 += 2*curve.a1[d]*curve.a2[d] + 2*a0[d]*curve.a3[d];
+                k2 += 2*a0[d]*curve.a2[d] + Math.pow(curve.a1[d], 2);
+                k1 += 2*a0[d]*curve.a1[d];
+                k0 += Math.pow(a0[d], 2);
+            }
+
+            // 'differentiate' and find roots
+            const computedRoots = findRoots([k1, k2*2, k3*3, k4*4, k5*5, k6*6]);
+            const pointsToCheck = [0, 1];
+
+            for (let i = 0; i < computedRoots[0].length; i++) {
+                // if imaginary part is less than TOLERANCE
+                if (Math.abs(computedRoots[1][i]) < TOLERANCE 
+                    && computedRoots[0][i] >= 0 && computedRoots[0][i] <= 1) {
+                    pointsToCheck.push(computedRoots[0][i]);
+                }
+            }
+
+            let localMin: number = Number.MAX_VALUE;
+            for (let i = 0; i < pointsToCheck.length; i++) {
+                const t: number = pointsToCheck[i];
+                const distSq: number = k6 * Math.pow(t, 6) + k5*Math.pow(t, 5)
+                    + k4*Math.pow(t, 4) + k3*Math.pow(t, 3) + k2*Math.pow(t, 2)
+                    + k1*t + k0;
+
+                if (distSq < localMin) {
+                    localMin = distSq;
+                }
+            }
+
+            if (localMin < minDistSq) {
+                minDistSq = localMin;
+                minCurveIndex = index;
+            }
+        });
+
+        if (minDistSq < Math.pow(MAX_DIST, 2)) {
+            return {index: minCurveIndex, dist: Math.pow(minDistSq, 0.5)};
+        } else {
+            return {index: -1, dist: Number.MAX_VALUE};
+        }
     }
 
     /**
@@ -198,7 +236,7 @@ class Spline {
      * @param {string} index The coordinate to generate the 1-D spline for (ex: 'j')
      * @returns {Array} Solution A n-1 tuple of [const coeff, linear coeff, quad coeff, cubic coeff] for each interval in spline.
      */
-    solveCurve(index: string) {
+    solveCurve(index: string): Solution1D {
         var pts: Array<Point> = this.points;
         let n = pts.length - 1; // there are n+1 points
         
@@ -248,9 +286,9 @@ class Spline {
         }
 
         // package solution
-        var solution = [];
+        var solution = <Solution1D>{ curves: [] };
         for (let i = 0; i < n; i++) {
-            solution.push([a[i], b[i], c[i], d[i]]);
+            solution.curves.push(<Curve1D>{ a0: a[i], a1: b[i], a2: c[i], a3: d[i] });
         }
 
         return solution;
@@ -271,28 +309,28 @@ class Spline {
      */
     setcurve() {
         if (this.points.length == 0) return;
-        var curves: any[][] = [];
-        
+        const numCurves: number = this.points.length - 1;
+
+        var solutions: Solution1D[] = [];
         ['i', 'j'].forEach((index) => {
-            curves.push(this.solveCurve(index));
+            solutions.push(this.solveCurve(index));
         });
-        
-        var solution = <Solution>{ A: [], B: [], C: [], D: [] };
 
-        let indices = ['A', 'B', 'C', 'D'];
+        // package two dimensions together into one solution
+        let solution = <Solution>{ curves: [] };
+        for (let i = 0; i < numCurves; i++) {
+            let curve: Curve = <Curve>{a0: [], a1: [], a2: [], a3: []};
 
-        for (let i = 0; i < curves[0].length; i++) {
-            for (let j = 0; j < 4; j++) {
-                var coords: number[] = [];
-                coords.push(curves[0][i][j]);
-                coords.push(curves[1][i][j]);
-
-                solution[indices[j]].push(coords);
+            for (let j = 0; j < solutions.length; j++) {
+                ['a0', 'a1', 'a2', 'a3'].forEach((param, index) => {
+                    curve[param].push(solutions[j].curves[i][param]);
+                });
             }
+
+            solution.curves.push(curve);
         }
 
-        // console.log(Date.now() - t1);
-
+        // cache solution
         this.spline = solution;
     }
 
@@ -302,4 +340,33 @@ class Spline {
     curve() {
         return this.spline;
     }
+}
+
+interface Curve1D {
+    a0: number;
+    a1: number;
+    a2: number;
+    a3: number;
+    [key: string]: number;
+}
+
+interface Curve {
+    a0: number[];
+    a1: number[];
+    a2: number[];
+    a3: number[];
+    [key: string]: number[];
+}
+
+interface Solution1D {
+    curves: Curve1D[];
+}
+
+interface Solution {
+    curves: Curve[];
+}
+
+interface MinCurve {
+    index: number,
+    dist: number,
 }

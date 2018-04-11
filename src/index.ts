@@ -6,6 +6,9 @@ let height: number;
 let selectedPoint: Point;
 let highlightedPoint: Point;
 
+let selectedCurveIndex: number;
+let selectedSplineColor: string = 'black';
+
 let menuHidden: boolean = false;
 let menu: HTMLElement;
 
@@ -16,8 +19,6 @@ const selectedColor: string = 'rgba(255, 255, 255, 0.33)';
 const highlightedColor: string = 'rgba(255, 255, 255, 0.66)';
 const backgroundColor: string = 'seagreen';
 const splineColor: string = 'white';
-
-
 
 var spline = new Spline();
 
@@ -33,6 +34,11 @@ window.onload = function() {
     canvas.addEventListener("mousedown", onMouseDown);
     window.addEventListener("mouseup", onMouseUp)
     canvas.addEventListener("mousemove", onMouseMove);
+
+    canvas.addEventListener("touchstart", onTouchDown);
+    window.addEventListener("touchend", onTouchUp);
+    window.addEventListener("touchcancel", onTouchUp);
+    canvas.addEventListener("touchmove", onTouchMove);
 
     canvas.addEventListener("contextmenu", function(ev) {
         ev.preventDefault();
@@ -74,22 +80,34 @@ function showHideMenu() {
  * @param {MouseEvent} event A MouseEvent.
  */
 function onMouseDown(event: MouseEvent) {
-    let target = spline.getNearestPoint(event.offsetX, event.offsetY, distThresh);
+    handleMouseDown(event.offsetX, event.offsetY, event.buttons);
+}
+
+function onTouchDown(event: TouchEvent) {
+    const touches: TouchList = event.touches;
+    handleMouseDown(touches[0].clientX, touches[0].clientY);
+}
+
+function handleMouseDown(x: number, y: number, buttons?: number) {
+
+    let target = spline.getNearestPoint(x,y, distThresh);
 
     // if right-button pressed
-    if (event.buttons % 4 >= 2) {
+    if (buttons && buttons % 4 >= 2) {
         if (target) {
             spline.removePoint(target);
 
         } else {
-            insertPoint(event);
+            spline.insertPoint(x, y);
         }
-    } else if (event.buttons % 2 == 1) {
+    
+    // if is touch event or left-button pressed, add/select point
+    } else if ((!buttons) || (buttons && buttons % 2 == 1)) {
         if (target) {
             selectedPoint = target;
         
         } else {
-            addPoint(event);
+            spline.addPoint(x, y);
 
         }
     }
@@ -104,52 +122,67 @@ function onMouseDown(event: MouseEvent) {
  * @param {MouseEvent} event 
  */
 function onMouseMove(event: MouseEvent) {
-    if (selectedPoint) {
-        selectedPoint.i = event.offsetX;
-        selectedPoint.j = event.offsetY;
+    handleMouseMove(event.offsetX, event.offsetY, false);
+}
 
-        spline.setcurve();
-        window.requestAnimationFrame(draw);
+function onTouchMove(event: TouchEvent) {
+    const touches: TouchList = event.touches;
+    handleMouseMove(touches[0].clientX, touches[0].clientY, true);
+}
+
+function handleMouseMove(x: number, y: number, isTouchEvent: boolean) {
+    console.log("MOUSEMOVE:", isTouchEvent);
+    let doDraw: boolean = false;
+    
+    if (isTouchEvent) {
+        selectedCurveIndex = -1;
+    } else {
+        const closestCurve: MinCurve = spline.getNearestCurve(x, y);
+
+        if (closestCurve.index != selectedCurveIndex) {
+            selectedCurveIndex = closestCurve.index;
+            doDraw = true;
+        }
     }
 
-    let target: Point = spline.getNearestPoint(event.offsetX, event.offsetY, distThresh);
+    if (selectedPoint) {
+        selectedPoint.i = x;
+        selectedPoint.j = y;
+
+        spline.setcurve();
+        doDraw = true;
+    }
+
+    let target: Point = spline.getNearestPoint(x, y, distThresh);
 
     if (target) {
         if (!target.equals(highlightedPoint)) {
-        
             highlightedPoint = target;
-            window.requestAnimationFrame(draw);
-
+            doDraw = true;
         }
-    } else if (highlightedPoint) {
-        
+
+    } else if (highlightedPoint) {        
         highlightedPoint = undefined;
-        window.requestAnimationFrame(draw);
-    
+        doDraw = true;
+        
     }
+
+    if (doDraw) window.requestAnimationFrame(draw);
 }
 
 /**oB
  * Releases the current `selectedPoint`.
  * @param {MouseEvent} event A mouse event. 
  */
-function onMouseUp(event: MouseEvent) {
+function onMouseUp() {
     selectedPoint = undefined;
     window.requestAnimationFrame(draw);
 }
 
-
-/**
- * Adds a point to the spline and redraws.
- * @param {MouseEvent} event A mouse event.
- */
-function addPoint(event: MouseEvent) {
-    spline.addPoint(event.offsetX, event.offsetY);
-    window.requestAnimationFrame(draw);
-}
-
-function insertPoint(event: MouseEvent) {
-    spline.insertPoint(event.offsetX, event.offsetY);
+function onTouchUp() {
+    console.log("TOUCHUP", selectedCurveIndex);
+    selectedPoint = undefined;
+    selectedCurveIndex = -1;
     window.requestAnimationFrame(draw);
 }
 
@@ -186,7 +219,7 @@ function draw() {
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
     
-    drawLine(spline.spline);
+    drawLine(spline.curve());
     
     spline.points.forEach((point) => {
         let color = pointColor;
@@ -232,16 +265,26 @@ function putPixel(i: number, j: number, color: string) {
 
 /**
  * Draws a cubic spline given by `params`.
- * @param {`Spline`} params 
+ * @param {`Spline`} solution 
  */
-function drawLine(params: Solution) {
+function drawLine(solution: Solution) {
 
-    for (let n = 0; n < spline.points.length - 1; n++) {
+    for (let n = 0; n < solution.curves.length; n++) {
+        
+        let color: string = splineColor;
+        if (n == selectedCurveIndex) {
+            color = selectedSplineColor;
+        }
+
         for (let t = 0; t < 1; t += 0.001) {
 
-            var j = params.A[n][0] + params.B[n][0] * t + params.C[n][0] * t*t + params.D[n][0] * t*t*t;
-            var i = params.A[n][1] + params.B[n][1] * t + params.C[n][1] * t*t + params.D[n][1] * t*t*t;
-            putPixel(i, j, splineColor);
+            var j: number = 
+                solution.curves[n].a0[0] + solution.curves[n].a1[0] * t 
+                + solution.curves[n].a2[0] * t*t + solution.curves[n].a3[0] * t*t*t;
+            var i: number = 
+                solution.curves[n].a0[1] + solution.curves[n].a1[1] * t 
+                + solution.curves[n].a2[1] * t*t + solution.curves[n].a3[1] * t*t*t;
+            putPixel(i, j, color);
         
         }
     }
