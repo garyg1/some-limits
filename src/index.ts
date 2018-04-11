@@ -18,7 +18,7 @@ const backgroundColor: string = 'seagreen';
 
 const pointColor: string = 'rgba(255, 255, 255, 1)';
 const highlightedColor: string = 'rgba(255, 255, 255, 0.5)';
-const selectedColor: string = 'rgba(255, 255, 255, 0.33)';
+const selectedColor: string = 'rgba(100, 255, 210, 0.5)';
 
 const splineColor: string = 'white';
 let selectedSplineColor: string = 'rgba(255, 255, 255, 0.5)';
@@ -234,7 +234,7 @@ function draw() {
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
     
-    // drawLine(spline.curve());
+    drawLine(spline.curve());
     
     spline.points.forEach((point) => {
         let color = pointColor;
@@ -274,11 +274,8 @@ function putPixel(i: number, j: number, color: string) {
     i = Math.floor(i);
     j = Math.floor(j);
 
-    ctx.fillStyle = backgroundColor;
-    ctx.fillRect(j, i, 1, 1);
-
     ctx.fillStyle = color;
-    ctx.fillRect(j, i, 1, 1);
+    ctx.fillRect(i, j, 2, 2);
 }
 
 /**
@@ -294,14 +291,33 @@ function drawLine(solution: Solution) {
             color = selectedSplineColor;
         }
 
-        for (let t = 0; t < 1; t += 0.001) {
+        const curve: Curve = solution.curves[n];
 
-            var j: number = 
-                solution.curves[n].a0[0] + solution.curves[n].a1[0] * t 
-                + solution.curves[n].a2[0] * t*t + solution.curves[n].a3[0] * t*t*t;
-            var i: number = 
-                solution.curves[n].a0[1] + solution.curves[n].a1[1] * t 
-                + solution.curves[n].a2[1] * t*t + solution.curves[n].a3[1] * t*t*t;
+        let dt: number = 0;
+        for (let t = 0; t < 1; t += dt) {
+
+            // evaluate i, j <= P(t), where P is the current cubic spline section
+            const i: number = 
+                curve.a0[0] + curve.a1[0] * t 
+                + curve.a2[0] * t*t + curve.a3[0] * t*t*t;
+            const j: number = 
+                curve.a0[1] + curve.a1[1] * t 
+                + curve.a2[1] * t*t + curve.a3[1] * t*t*t;
+
+            // evaluate (di, dj) <= P'(t), where P' is the derivative of P
+            const di: number =
+                curve.a1[0] + 2*curve.a2[0] * t
+                + 3*curve.a3[0] * t*t;
+            const dj: number =
+                curve.a1[1] + 2*curve.a2[1] * t
+                + 3*curve.a3[1] * t*t;
+            
+            // use adaptive sampling step size.
+            // assuming the function f(t) = (x(t), y(t)) is locally linear,
+            // i.e., x(t + dt) = x(t) + dt*x'(t), and y(t + dt) = y(t) + dt*y'(t),
+            // then the t value for the 'next' point to graph will be about
+            // t1 = min(1 / |x'(t)|, 1 / |y'(t)|) + t0
+            dt = Math.min(1 / Math.abs(di), 1 / Math.abs(dj));
             putPixel(i, j, color);
         
         }

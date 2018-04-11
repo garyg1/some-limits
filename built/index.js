@@ -12,7 +12,7 @@ var distThresh = 40;
 var backgroundColor = 'seagreen';
 var pointColor = 'rgba(255, 255, 255, 1)';
 var highlightedColor = 'rgba(255, 255, 255, 0.5)';
-var selectedColor = 'rgba(255, 255, 255, 0.33)';
+var selectedColor = 'rgba(100, 255, 210, 0.5)';
 var splineColor = 'white';
 var selectedSplineColor = 'rgba(255, 255, 255, 0.5)';
 var spline = new Spline();
@@ -158,6 +158,7 @@ function draw() {
     height = canvas.height;
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
+    drawLine(spline.curve());
     spline.points.forEach(function (point) {
         var color = pointColor;
         if (point.equals(highlightedPoint)) {
@@ -178,10 +179,8 @@ function drawCircle(i, j, radius, color) {
 function putPixel(i, j, color) {
     i = Math.floor(i);
     j = Math.floor(j);
-    ctx.fillStyle = backgroundColor;
-    ctx.fillRect(j, i, 1, 1);
     ctx.fillStyle = color;
-    ctx.fillRect(j, i, 1, 1);
+    ctx.fillRect(i, j, 2, 2);
 }
 function drawLine(solution) {
     for (var n = 0; n < solution.curves.length; n++) {
@@ -189,11 +188,18 @@ function drawLine(solution) {
         if (!highlightedPoint && n == selectedCurveIndex) {
             color = selectedSplineColor;
         }
-        for (var t = 0; t < 1; t += 0.001) {
-            var j = solution.curves[n].a0[0] + solution.curves[n].a1[0] * t
-                + solution.curves[n].a2[0] * t * t + solution.curves[n].a3[0] * t * t * t;
-            var i = solution.curves[n].a0[1] + solution.curves[n].a1[1] * t
-                + solution.curves[n].a2[1] * t * t + solution.curves[n].a3[1] * t * t * t;
+        var curve = solution.curves[n];
+        var dt = 0;
+        for (var t = 0; t < 1; t += dt) {
+            var i = curve.a0[0] + curve.a1[0] * t
+                + curve.a2[0] * t * t + curve.a3[0] * t * t * t;
+            var j = curve.a0[1] + curve.a1[1] * t
+                + curve.a2[1] * t * t + curve.a3[1] * t * t * t;
+            var di = curve.a1[0] + 2 * curve.a2[0] * t
+                + 3 * curve.a3[0] * t * t;
+            var dj = curve.a1[1] + 2 * curve.a2[1] * t
+                + 3 * curve.a3[1] * t * t;
+            dt = Math.min(1 / Math.abs(di), 1 / Math.abs(dj));
             putPixel(i, j, color);
         }
     }
