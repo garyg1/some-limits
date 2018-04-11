@@ -18,7 +18,7 @@ const backgroundColor: string = 'seagreen';
 
 const pointColor: string = 'rgba(255, 255, 255, 1)';
 const highlightedColor: string = 'rgba(255, 255, 255, 0.5)';
-const selectedColor: string = 'rgba(100, 255, 210, 0.5)';
+const selectedColor: string = 'rgba(255, 255, 255, 0.5)';
 
 const splineColor: string = 'white';
 let selectedSplineColor: string = 'rgba(255, 255, 255, 0.5)';
