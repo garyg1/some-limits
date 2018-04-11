@@ -114,16 +114,18 @@ function handleMouseMove(x, y, isTouchEvent) {
         spline.setcurve();
         doDraw = true;
     }
-    var target = spline.getNearestPoint(x, y, distThresh);
-    if (target && !isTouchEvent) {
-        if (!target.equals(highlightedPoint)) {
-            highlightedPoint = target;
+    else {
+        var target = spline.getNearestPoint(x, y, distThresh);
+        if (target && !isTouchEvent) {
+            if (!target.equals(highlightedPoint)) {
+                highlightedPoint = target;
+                doDraw = true;
+            }
+        }
+        else if (highlightedPoint) {
+            highlightedPoint = undefined;
             doDraw = true;
         }
-    }
-    else if (highlightedPoint) {
-        highlightedPoint = undefined;
-        doDraw = true;
     }
     if (doDraw)
         window.requestAnimationFrame(draw);
@@ -156,7 +158,6 @@ function draw() {
     height = canvas.height;
     ctx.fillStyle = backgroundColor;
     ctx.fillRect(0, 0, width, height);
-    drawLine(spline.curve());
     spline.points.forEach(function (point) {
         var color = pointColor;
         if (point.equals(highlightedPoint)) {
