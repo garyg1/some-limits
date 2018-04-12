@@ -1,12 +1,6 @@
 class Point {
-    i: number;
-    j: number;
     [key: string]: any;
-
-    constructor(i: number, j: number) {
-        this.i = i;
-        this.j = j;
-    }
+    constructor(public i: number, public j: number) {}
 
     /**
      * Returns whether this point and another point have the same coordinates.
@@ -23,7 +17,7 @@ class Point {
      * @param {Point} other 
      * @returns {Number} dist The distance (Euclidian) from `this` to `other`
      */
-    dist(other: Point) {
+    dist(other: Point): number {
         let norm = Math.pow(this.i - other.i, 2) + Math.pow(this.j - other.j, 2);
         return Math.pow(norm, 0.5);
     }
