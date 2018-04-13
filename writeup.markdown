@@ -103,7 +103,10 @@ $$ t_{i+1} \approx t_1 + \min(\frac {1}{|x'(t_i)|}, \frac{1}{|y'(t_i)|})$$
 
 If the first-derivative approximation for \\( x(t_{i+1}) \\) is close (which it usually is), the \\( t_i \\) generated will give us connected squares. Even better, the number of \\( t_i \\) generated will be close to the minimal number of \\( t_i \\) that still give us connected squares (since our \\( t_i \\) were chosen so that \\( \\max(\\Delta x, \\Delta y) \\) = 1)
 
+<<<<<<< HEAD:writeup.markdown
 Here is the code for the adaptive step-size.
+=======
+>>>>>>> 2d9dfe65f08de4a5b784f660a36bf462d85f3593:writeup.markdown
 
     let dt: number = 0;
     for (let t = 0; t < 1; t += dt) {
@@ -111,6 +114,13 @@ Here is the code for the adaptive step-size.
         
         // update t using adaptive algorithm
         dt = Math.min(1 / Math.abs(dx), 1 / Math.abs(dy));
+<<<<<<< HEAD:writeup.markdown
+=======
+
+        // plot the point
+        putPixel(x, y, color);
+    }
+>>>>>>> 2d9dfe65f08de4a5b784f660a36bf462d85f3593:writeup.markdown
 
         // plot the point
         putPixel(x, y, color);
