@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="generator" content="pandoc">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Building a fast spline editor with HTML5</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+  <style>
+    html, body {
+      font-family: sans-serif;
+    }
+  </style>
+</head>
+<body>
+<header>
+<h1 class="title">Building a fast spline editor with HTML5</h1>
+</header>
+<p>This is a write-up for a HTML5 Canvas spline-drawing program.</p>
+<p>You can check it out <a href="http://garygurlaskie.com/some-limits/">here</a>.</p>
+<h2 id="cubic-splines">Cubic splines</h2>
+<h3 id="definition">Definition</h3>
+<p>Given points \( (t_0, x_0), (t_1, x_1), ..., (t_n, x_n) \), a <strong>cubic spline</strong> is a piecewise cubic polynomial \( f(t) \) that passes through each \( (t_i, x_i) \) pair, and has the property that \( f \), \( f' \), and \( f^{} \) are continuous on \( [t_0, t_n] \).</p>
+<h3 id="uniqueness">Uniqueness</h3>
+<p>For any set of points, there are many different cubic splines that interpolate them.</p>
+<p>Cubic splines have \( 4n \) coefficients, but there are only \( 4n - 2 \) constraints on their coefficients. We will impose two more constraints, and then we can uniquely define a &quot;natural&quot; cubic spline from the control points.</p>
+<h3 id="natural-splines">Natural Splines</h3>
+<p>A <strong>natural cubic spline</strong> is a cubic spline that also satisfies the condition that \( f^{}(t_1) = f^{}(t_n) = 0 \).</p>
+<h2 id="implementation">Implementation</h2>
+<h3 id="parametric-splines">Parametric Splines</h3>
+<p><strong>The problem:</strong> Given a set of points \( r_0 = (x_0, y_0), r_1 = (x_1, y_1), ... , r_n = (x_n, y_n) \), we want to construct a spline that interpolates them <em>in order</em>.</p>
+<p>We can't do this with splines in a single dimension. So we parameterize, and consider a parametric function \( f(t) = (x(t), y(t)) \) that interpolates \( (0, r_0), (1, r_1), ... , (n, r_n) \). You can show that if \( x(t) \) and \( y(t) \) are splines for \( \{(i, x_i)\} \) and \( \{(i, y_i)\} \), then \( f(t) \) will be a spline for \( \{(i, r_i)\} \).</p>
+<h3 id="finding-the-closest-spline-segment-to-a-point">Finding the closest spline segment to a point</h3>
+<p><strong>The problem:</strong> Given a point \( (x, y) \) and a parametric cubic spline \( f(t) = (x(t), y(t))\), find the segment of the spline \( (x, y) \) is closest to.</p>
+<p>Since splines are continuous, we can just apply basic optimization techniques:</p>
+<ol type="1">
+<li>For each spline segment \( f_i \), find the critical points of the distance \( D_i(t) \).</li>
+<li>The critical point \(s\) with the smallest \( D_i(s) \) is the absolute minimum for this spline.</li>
+<li>Choose the spline segment with the smallest minimum distance.</li>
+</ol>
+<p>But we run into a problem: the squared distance from a cubic function to a point is a sixth degree polynomial, so the derivative is a fifth degree polynomial. There is no explicit formula!</p>
+<p>We must choose an iterative method to find the roots. An simple and interesting one is called Durand-Kerner, which finds all five roots simultaneously. Some of the roots will be complex numbers.</p>
+<h4 id="the-durand-kerner-method">The Durand-Kerner method</h4>
+<p>The method comes from the observation that</p>
+<p><span class="math display">\[ P(x) = (x - r_1)(x - r_2)(x - r_3)(x - r_4)(x - r_5) \]</span></p>
+<p>implies</p>
+<p><span class="math display">\[ r_1 = x + \frac {P(x)} {(x - r_2)(x - r_3)(x - r_4)(x - r_5)}\]</span></p>
+<p>Then, we perform a fixed point iteration to solve for all five roots simultaneously. We choose initial values \( a_0, b_0,..., e_0 C \). Then we compute</p>
+<p><span class="math display">\[ a_{i + 1} = a_i + \frac {P(a_i)} {(a_i - b_i)(a_i - c_i)(a_i - d_i)(a_i - e_i)}\]</span></p>
+<p><span class="math display">\[ b_{i + 1} = b_i + \frac {P(b_i)} {(b_i - a_i)(b_i - c_i)(b_i - d_i)(b_i - e_i)}\]</span></p>
+<p><span class="math display">\[ ... \]</span></p>
+<p><span class="math display">\[ e_{i + 1} = e_i + \frac {P(e_i)} {(e_i - a_i)(e_i - b_i)(e_i - c_i)(e_i - d_i)}\]</span></p>
+<p>until \( |a_{i+1} - a_i| &lt; \), \( |b_{i+1} - b_i| &lt; \), \(...\), and \( |e_{i+1} - e_i| &lt; \) for some tolerance \( \).</p>
+<p>The <a href="https://en.wikipedia.org/wiki/Durand%E2%80%93Kerner_method">Wikipedia article</a> is a pretty good read.</p>
+<h4 id="other-methods">Other methods</h4>
+<p>I read an <a href="http://homepage.divms.uiowa.edu/~atkinson/ftp/CurvesAndSufacesClosestPoint.pdf">interesting paper</a> about using an ensemble method to solve this problem. The authors were using cubic splines to model roads for a driving simulator, and wanted to know where the vehicle was on the road given the \((x, y, z) \) coordinates.</p>
+<h3 id="drawing-the-curve">Drawing the curve</h3>
+<p><strong>The problem:</strong> Graph a cubic spline continuously on a grid of pixels.</p>
+<p>In other words, we want to find \( 0 = t_1 &lt; t_2 &lt; ... &lt; t_{k-1} &lt; t_k = 1\) such that, if we plot the points \( f(t_1), f(t_2), ..., f(t_k) \) as 1x1 squares, the squares will be connected.</p>
+<p><strong>My Solution:</strong> We will use an adaptive algorithm to find the \( t_i \).</p>
+<p>Let's impose an additional restriction -- if we have for all \( 1 t k \) that</p>
+<p><span class="math display">\[ \max(|x(t_{i+1}) - x(t_i)|, |y(t_{i+1}) - y(t_i)|) = 1\]</span></p>
+<p>then our set of squares will certainly be adjacent.</p>
+<p>Let's approximate</p>
+<p><span class="math display">\[ x(t_{i+1}) \approx x(t_i) + x&#39;(t_i) (t_{i+1} - t_i)\]</span></p>
+<p>so we have that</p>
+<p><span class="math display">\[ 1 \approx |x&#39;(t_i) (t_{i+1} - t_i)|\]</span></p>
+<p>and</p>
+<p><span class="math display">\[ t_{i+1} \approx t_1 + \frac {1}{|x&#39;(t_i)|}\]</span></p>
+<p>and by the same argument for \( y(t) \), we have</p>
+<p><span class="math display">\[ t_{i+1} \approx t_1 + \min(\frac {1}{|x&#39;(t_i)|}, \frac{1}{|y&#39;(t_i)|})\]</span></p>
+<p>This is exactly how I pick my points to graph.</p>
+<pre><code>let dt: number = 0;
+for (let t = 0; t &lt; 1; t += dt) {
+    // evaulate x(t), y(t), x&#39;(t), y&#39;(t)...
+    
+    // update t using adaptive algorithm
+    dt = Math.min(1 / Math.abs(dx), 1 / Math.abs(dy));
+
+    // plot the point
+    putPixel(x, y, color);
+}</code></pre>
+<p>This is fast enough to be smooth on my Nexus 5, and looks pretty good.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I had a lot of fun building this, and I got to learn about a simultaneous root-finding algorithm and I got to figure out a decent way to do adaptive polynomial graphing. If you have any comments or think I could have done it better, <script type="text/javascript">
+<!--
+h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x67;&#x61;&#114;&#x79;&#x67;&#x75;&#114;&#108;&#x61;&#x73;&#x6b;&#x69;&#x65;';e=n+a+h;
+document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+'&#x49;&#x27;&#100;&#32;&#108;&#x6f;&#118;&#x65;&#32;&#116;&#x6f;&#32;&#104;&#x65;&#x61;&#114;'+'<\/'+'a'+'>');
+// -->
+</script><noscript>&#x49;&#x27;&#100;&#32;&#108;&#x6f;&#118;&#x65;&#32;&#116;&#x6f;&#32;&#104;&#x65;&#x61;&#114;&#32;&#40;&#x67;&#x61;&#114;&#x79;&#x67;&#x75;&#114;&#108;&#x61;&#x73;&#x6b;&#x69;&#x65;&#32;&#x61;&#116;&#32;&#x67;&#x6d;&#x61;&#x69;&#108;&#32;&#100;&#x6f;&#116;&#32;&#x63;&#x6f;&#x6d;&#x29;</noscript>.</p>
+</body>
+</html>
