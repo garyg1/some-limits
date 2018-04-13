@@ -1,18 +1,13 @@
 ---
-layout: post
 title: "Building a fast spline editor with HTML5"
-date: 2018-04-11 21:50:54 -0400
-author: garyg1
-tags: splines HTML5 
 ---
 
-This is a write-up for a thing I made.
+This is a write-up for a HTML5 Canvas spline-drawing program.
 
 You can check it out [here](http://garygurlaskie.com/some-limits/splines.html).
 
 ## Cubic splines
 
-If you already know what a cubic spline is, there's nothing new in this section.
 ### Definition
 
 Given points \\( (t_0, x_0), (t_1, x_1), ..., (t_n, x_n) \\), a __cubic spline__  is a piecewise cubic polynomial \\( f(t) \\) that passes through each \\( (t_i, x_i) \\) pair, and has the property that \\( f \\), \\( f' \\), and \\( f^{\prime\prime} \\) are continuous on \\( [t_0, t_n] \\).
@@ -108,18 +103,17 @@ $$ t_{i+1} \approx t_1 + \min(\frac {1}{|x'(t_i)|}, \frac{1}{|y'(t_i)|})$$
 
 This is exactly how I pick my points to graph.
 
-{% highlight js %}
-let dt: number = 0;
-for (let t = 0; t < 1; t += dt) {
-    // evaulate x(t), y(t), x'(t), y'(t)...
-    
-    // update t using adaptive algorithm
-    dt = Math.min(1 / Math.abs(dx), 1 / Math.abs(dy));
 
-    // plot the point
-    putPixel(x, y, color);
-}
-{% endhighlight %}
+    let dt: number = 0;
+    for (let t = 0; t < 1; t += dt) {
+        // evaulate x(t), y(t), x'(t), y'(t)...
+        
+        // update t using adaptive algorithm
+        dt = Math.min(1 / Math.abs(dx), 1 / Math.abs(dy));
+
+        // plot the point
+        putPixel(x, y, color);
+    }
 
 This is fast enough to be smooth on my Nexus 5, and looks pretty good.
 
