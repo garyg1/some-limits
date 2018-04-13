@@ -28,7 +28,14 @@
 <h2 id="implementation">Implementation</h2>
 <h3 id="parametric-splines">Parametric Splines</h3>
 <p><strong>The problem:</strong> Given a set of points \( r_0 = (x_0, y_0), r_1 = (x_1, y_1), ... , r_n = (x_n, y_n) \), we want to construct a spline that interpolates them <em>in order</em>.</p>
-<p>We can't do this with splines in a single dimension. So we parameterize, and consider a parametric function \( f(t) = (x(t), y(t)) \) that interpolates \( (0, r_0), (1, r_1), ... , (n, r_n) \). You can show that if \( x(t) \) and \( y(t) \) are splines for \( \{(i, x_i)\} \) and \( \{(i, y_i)\} \), then \( f(t) \) will be a spline for \( \{(i, r_i)\} \).</p>
+<p>We can't do this with splines in a single dimension. So we parameterize, and consider a parametric function \( f(t) = (x(t), y(t)) \) that interpolates \( (t_0, r_0), (t_1, r_1), ... , (t_n, r_n) \). You can show that if \( x(t) \) and \( y(t) \) are splines for \( \{(t_i, x_i)\} \) and \( \{(t_i, y_i)\} \), then \( f(t) \) will be a spline for \( \{(t_i, r_i)\} \).</p>
+<p>There are basically no restrictions on our choice of \( t_i \)s (except that \( t_i &lt; t_{i+1} \)). And our choice of \( t_i \) dramatically affects the parametric natural spline we get.</p>
+<p>We have a couple nice options for our \( t_i \)s.</p>
+<ol type="1">
+<li><p>We can choose \( t_0 = 0, t_1 = 1, ... , t_n = n \). This choice of evenly spaced \( t_i \)s simplifies some of the spline calculations.</p></li>
+<li><p>We can choose our \( t_i \)s to be proportional to the distance between \( r_i \) and \( r_{i+1} \). This choice means the spline will have relatively constant &quot;velocity&quot;, and the resulting spline is a very smooth-looking interpolation of \( r_0, r_1, ..., r_n \).</p></li>
+</ol>
+<p>I implemented both of these -- you can use the <code>velocity</code> toggle to switch between options 1 and 2 (option 2 is the default).</p>
 <h3 id="finding-the-closest-spline-segment-to-a-point">Finding the closest spline segment to a point</h3>
 <p><strong>The problem:</strong> Given a point \( (x, y) \) and a parametric cubic spline \( f(t) = (x(t), y(t))\), find the segment of the spline \( (x, y) \) is closest to.</p>
 <p>Since splines are continuous, we can just apply basic optimization techniques:</p>
@@ -81,7 +88,8 @@ for (let t = 0; t &lt; 1; t += dt) {
     putPixel(x, y, color);
 }</code></pre>
 <h2 id="conclusion">Conclusion</h2>
-<p>I had a lot of fun building this, and I got to learn about a simultaneous root-finding algorithm and I got to figure out a decent way to do adaptive polynomial graphing. If you have any comments or think I could have done it better, <script type="text/javascript">
+<p>I had a lot of fun building this, and I got to learn about a simultaneous root-finding algorithm and I got to figure out a decent way to do adaptive polynomial graphing.</p>
+<p>Did you like option 1 or option 2? If you have any comments or think I could have done it better, <script type="text/javascript">
 <!--
 h='&#x67;&#x6d;&#x61;&#x69;&#108;&#46;&#x63;&#x6f;&#x6d;';a='&#64;';n='&#x67;&#x61;&#114;&#x79;&#x67;&#x75;&#114;&#108;&#x61;&#x73;&#x6b;&#x69;&#x65;';e=n+a+h;
 document.write('<a h'+'ref'+'="ma'+'ilto'+':'+e+'" clas'+'s="em' + 'ail">'+'&#x49;&#x27;&#100;&#32;&#108;&#x6f;&#118;&#x65;&#32;&#116;&#x6f;&#32;&#104;&#x65;&#x61;&#114;'+'<\/'+'a'+'>');

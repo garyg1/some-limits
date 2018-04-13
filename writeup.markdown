@@ -27,7 +27,17 @@ A __natural cubic spline__ is a cubic spline that also satisfies the condition t
 
 **The problem:** Given a set of points \\( r_0 = (x_0, y_0), r_1 = (x_1, y_1), ... , r_n = (x_n, y_n) \\), we want to construct a spline that interpolates them *in order*. 
 
-We can't do this with splines in a single dimension. So we parameterize, and consider a parametric function \\( f(t) = (x(t), y(t)) \\) that interpolates \\( (0, r_0), (1, r_1), ... , (n, r_n) \\). You can show that if \\( x(t) \\) and \\( y(t) \\) are splines for \\( \\{(i, x_i)\\} \\) and \\( \\{(i, y_i)\\} \\), then \\( f(t) \\) will be a spline for \\( \\{(i, r_i)\\} \\).
+We can't do this with splines in a single dimension. So we parameterize, and consider a parametric function \\( f(t) = (x(t), y(t)) \\) that interpolates \\( (t_0, r_0), (t_1, r_1), ... , (t_n, r_n) \\). You can show that if \\( x(t) \\) and \\( y(t) \\) are splines for \\( \\{(t_i, x_i)\\} \\) and \\( \\{(t_i, y_i)\\} \\), then \\( f(t) \\) will be a spline for \\( \\{(t_i, r_i)\\} \\).
+
+There are basically no restrictions on our choice of \\( t_i \\)s (except that \\( t_i < t_{i+1} \\)). And our choice of \\( t_i \\) dramatically affects the parametric natural spline we get.
+
+We have a couple nice options for our \\( t_i \\)s. 
+
+1. We can choose \\( t_0 = 0, t_1 = 1, ... , t_n = n \\). This choice of evenly spaced \\( t_i \\)s simplifies some of the spline calculations. 
+
+2. We can choose our \\( t_i \\)s to be proportional to the distance between \\( r_i \\) and \\( r_{i+1} \\). This choice means the spline will have relatively constant "velocity", and the resulting spline is a very smooth-looking interpolation of \\( r_0, r_1, ..., r_n \\). 
+
+I implemented both of these -- you can use the `velocity` toggle to switch between options 1 and 2 (option 2 is the default).
 
 ### Finding the closest spline segment to a point
 
@@ -118,4 +128,6 @@ Here is the code for the adaptive step-size.
 
 ## Conclusion
 
-I had a lot of fun building this, and I got to learn about a simultaneous root-finding algorithm and I got to figure out a decent way to do adaptive polynomial graphing. If you have any comments or think I could have done it better, [I'd love to hear](mailto:garygurlaskie@gmail.com).
+I had a lot of fun building this, and I got to learn about a simultaneous root-finding algorithm and I got to figure out a decent way to do adaptive polynomial graphing. 
+
+Did you like option 1 or option 2? If you have any comments or think I could have done it better, [I'd love to hear](mailto:garygurlaskie@gmail.com).
