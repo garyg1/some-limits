@@ -1,6 +1,10 @@
 "use strict"
 
 /*
+This source code is adapted from Mikola Lysenko's durand-kerner npm package.
+
+LICENCES: 
+
 Roots.js
 The MIT License (MIT)
 
@@ -24,7 +28,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-nextPow2
+nextPow2.js
 The MIT License (MIT)
 
 Copyright (c) 2015 Mikola Lysenko

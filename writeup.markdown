@@ -4,7 +4,7 @@ title: "Building a fast spline editor with HTML5"
 
 This is a write-up for a HTML5 Canvas spline-drawing program.
 
-You can check it out [here](http://garygurlaskie.com/some-limits/).
+You can check it out [here](http://garygurlaskie.com/some-limits/), and you can find the source code [here](https://github.com/garyg1/some-limits/tree/master/src).
 
 ## Cubic splines
 
@@ -19,7 +19,7 @@ Cubic splines have \\( 4n \\) coefficients, but there are only \\( 4n - 2 \\) co
 
 ### Natural Splines
 
-A __natural cubic spline__ is a cubic spline that also satisfies the condition that \\( f^{\prime\prime}(t_1) = f^{\prime\prime}(t_n) = 0 \\).
+A __natural cubic spline__ is a cubic spline that also satisfies the condition that \\( f^{\prime\prime}(t_0) = f^{\prime\prime}(t_n) = 0 \\).
 
 ## Implementation
 
@@ -63,7 +63,7 @@ $$ ... $$
 
 $$ e_{i + 1} = e_i + \frac {P(e_i)} {(e_i - a_i)(e_i - b_i)(e_i - c_i)(e_i - d_i)}$$
 
-until \\( \|a_{i+1} - a_i\| < \epsilon \\), \\( \|b_{i+1} - b_i\| < \epsilon \\), \\(...\\), and \\( \|e_{i+1} - e_i\| < \epsilon \\) for some tolerance \\( \epsilon \\). 
+until \\( \|a_{i+1} - a_i\| < \\epsilon \\), \\( \|b_{i+1} - b_i\| < \\epsilon \\), \\(...\\), and \\( \|e_{i+1} - e_i\| < \\epsilon \\) for some tolerance \\( \epsilon \\). 
 
 The [Wikipedia article](https://en.wikipedia.org/wiki/Durand%E2%80%93Kerner_method) is a pretty good read.
 
@@ -75,11 +75,11 @@ I read an [interesting paper](http://homepage.divms.uiowa.edu/~atkinson/ftp/Curv
 
 **The problem:** Graph a cubic spline continuously on a grid of pixels.
 
-In other words, we want to find \\( 0 = t_1 < t_2 < ... < t_{k-1} < t_k = 1\\) such that, if we plot the points \\( f(t_1), f(t_2), ..., f(t_k) \\) as 1x1 squares, the squares will be connected.
+In other words, we want to find \\( 0 = t_1 < t_2 < ... < t_{k-1} < t_k = 1\\) such that, if we plot the points \\( f(t_1), f(t_2), ..., f(t_k) \\) as the 1x1 pixels they live inside, the squares will be connected.
 
-**My Solution:** We will use an adaptive algorithm to find the \\( t_i \\).
+We will use an adaptive algorithm to find the \\( t_i \\).
 
-Let's impose an additional restriction -- if we have for all \\( 1 \le t \le k \\) that
+Let's impose an additional restriction -- if we have for all \\( 1 \\le t \\le k \\) that
 
 $$ \max(|x(t_{i+1}) - x(t_i)|, |y(t_{i+1}) - y(t_i)|) = 1$$
 
@@ -101,8 +101,9 @@ and by the same argument for \\( y(t) \\), we have
 
 $$ t_{i+1} \approx t_1 + \min(\frac {1}{|x'(t_i)|}, \frac{1}{|y'(t_i)|})$$
 
-This is exactly how I pick my points to graph.
+If the first-derivative approximation for \\( x(t_{i+1}) \\) is close (which it usually is), the \\( t_i \\) generated will give us connected squares. Even better, the number of \\( t_i \\) generated will be close to the minimal number of \\( t_i \\) that still give us connected squares (since our \\( t_i \\) were chosen so that \\( \\max(\\Delta x, \\Delta y) \\) = 1)
 
+Here is the code for the adaptive step-size.
 
     let dt: number = 0;
     for (let t = 0; t < 1; t += dt) {
@@ -114,8 +115,6 @@ This is exactly how I pick my points to graph.
         // plot the point
         putPixel(x, y, color);
     }
-
-This is fast enough to be smooth on my Nexus 5, and looks pretty good.
 
 ## Conclusion
 
