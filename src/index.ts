@@ -23,6 +23,9 @@ const selectedColor: string = 'rgba(255, 255, 255, 0.5)';
 const splineColor: string = 'white';
 let selectedSplineColor: string = 'rgba(255, 255, 255, 0.5)';
 
+let velocityButton: HTMLButtonElement;
+let useConstVelocity: boolean = true;
+
 var spline = new Spline();
 
 window.onload = function() {
@@ -69,6 +72,8 @@ window.onload = function() {
     let clearButton: HTMLElement = document.getElementById("clear");
     clearButton.addEventListener("click", clear);
 
+    velocityButton = <HTMLButtonElement>document.getElementById("velocity");
+    velocityButton.addEventListener("click", toggleVelocity);
 
     requestAnimationFrame(draw);
 }
@@ -81,6 +86,16 @@ function showHideMenu() {
     } else {
         menu.classList.remove("hidden");
     }
+}
+
+function toggleVelocity() {
+    velocityButton.classList.toggle('pressed');
+    useConstVelocity = !useConstVelocity;
+    
+    spline.setUseConstVelocity(useConstVelocity);
+    spline.setcurve();
+
+    window.requestAnimationFrame(draw);
 }
 
 /**
@@ -294,7 +309,7 @@ function drawLine(solution: Solution) {
         const curve: Curve = solution.curves[n];
 
         let dt: number = 0;
-        for (let t = 0; t < 1; t += dt) {
+        for (let t = 0; t < curve.t[0]; t += dt) {
 
             // evaluate i, j <= P(t), where P is the current cubic spline section
             const i: number = 

@@ -30,6 +30,8 @@ class Spline {
 
     spline: Solution;
     points: Array<Point>;
+    VELOCITY: number = 0.01; // in pixels per t
+    useConstVelocity: boolean = true;
 
     /**
      * Initialized an empty spline.
@@ -37,6 +39,10 @@ class Spline {
     constructor() {
         this.points = [];
         this.spline = <Solution> { curves: [] };
+    }
+
+    setUseConstVelocity(newVal: boolean) {
+        this.useConstVelocity = newVal;
     }
 
     /**
@@ -50,7 +56,7 @@ class Spline {
 
         this.points.push(new Point(i, j));
 
-        this.setcurve()
+        this.setcurve();
     }
 
     /**
@@ -68,7 +74,7 @@ class Spline {
             }
         });
 
-        this.setcurve()
+        this.setcurve();
     }
 
     /**
@@ -83,7 +89,7 @@ class Spline {
             }
         });
 
-        this.setcurve()
+        this.setcurve();
     }
 
     /**
@@ -91,7 +97,7 @@ class Spline {
      */
     removeLastPoint() {
         this.points.splice(this.points.length - 1, 1);
-        this.setcurve()
+        this.setcurve();
     }
 
     /**
@@ -209,7 +215,7 @@ class Spline {
                 for (let i = 0; i < computedRoots[0].length; i++) {
                     // if imaginary part is less than TOLERANCE
                     if (Math.abs(computedRoots[1][i]) < TOLERANCE
-                        && computedRoots[0][i] >= 0 && computedRoots[0][i] <= 1) {
+                        && computedRoots[0][i] >= 0 && computedRoots[0][i] <= curve.t[0]) {
                         pointsToCheck.push(computedRoots[0][i]);
                     }
                 }
@@ -307,12 +313,78 @@ class Spline {
         // package solution
         var solution = <Solution1D>{ curves: [] };
         for (let i = 0; i < n; i++) {
-            solution.curves.push(<Curve1D>{ a0: a[i], a1: b[i], a2: c[i], a3: d[i] });
+            solution.curves.push(<Curve1D>{ t: 1, a0: a[i], a1: b[i], a2: c[i], a3: d[i] });
         }
 
         return solution;
     }
 
+    solveCurveConstVelocity(index: string): Solution1D {
+        var pts: Array<Point> = this.points;
+        let n = pts.length - 1; // there are n+1 points
+        
+        var a = new Array(n+1);
+        for (let i = 0; i < n+1; i++) {
+            a[i] = <number>pts[i][index];
+        }
+
+        var b = new Array(n);
+        var d = new Array(n);
+
+        // calculate h
+        var h = new Array(n);
+        for (let i = 0; i < n; i++) {
+            h[i] = pts[i].dist(pts[i + 1]) * this.VELOCITY;
+        }
+        
+        // calculate rhs of matrix
+        var r = new Array(n);
+        for (let i = 0; i < n; i++) {
+            if (i == 0)
+                r[i] = 3*(a[1] - a[0])/h[i];
+            else
+                r[i] = 3*(a[i+1] - a[i])/h[i] - 3*(a[i] - a[i-1])/h[i-1];
+        }
+        
+        // solve tridiagonal matrix using the Thomas algorithm
+
+        // c' and d' from wikipedia
+        var cp = new Array(n+1);
+        var dp = new Array(n+1);
+        
+        // set these to 0 to remove need for special case
+        cp[0] = 0;
+        dp[0] = 0;
+        
+        // forward pass
+        for (let i = 1; i < n; i++) {
+            const denom = 2*(h[i] + h[i-1]) - h[i]*cp[i-1];
+            cp[i] = h[i] / denom;
+            dp[i] = (r[i] - h[i-1]*dp[i-1]) / denom;
+        }
+        
+        // quadratic coefficients for solution
+        var c = new Array(n+1);
+        c[n] = 0;
+
+        // backward pass
+        for (let j = n-1; j >= 0; j--) {
+            // calculate quadratic coeffs using Thomas's algorithm
+            c[j] = dp[j] - cp[j]*c[j+1];
+
+            // do linear and cubic coefficients
+            b[j] = (a[j+1] - a[j])/h[j] - h[j]*(c[j+1] + 2*c[j])/3;
+            d[j] = (c[j+1] - c[j]) / 3 / h[j];
+        }
+
+        // package solution
+        var solution = <Solution1D>{ curves: [] };
+        for (let i = 0; i < n; i++) {
+            solution.curves.push(<Curve1D>{ t: h[i], a0: a[i], a1: b[i], a2: c[i], a3: d[i] });
+        }
+
+        return solution;
+    }
     /**
      * Generates the parameters for this spline (with n+1 points) in the form
      * ```
@@ -332,19 +404,25 @@ class Spline {
 
         var solutions: Solution1D[] = [];
         ['i', 'j'].forEach((index) => {
-            solutions.push(this.solveCurve(index));
+            if (this.useConstVelocity) 
+                solutions.push(this.solveCurveConstVelocity(index));
+            else 
+                solutions.push(this.solveCurve(index));
         });
 
         // package two dimensions together into one solution
         let solution = <Solution>{ curves: [] };
         for (let i = 0; i < numCurves; i++) {
-            let curve: Curve = <Curve>{a0: [], a1: [], a2: [], a3: []};
+            let curve: Curve = <Curve>{t: [], a0: [], a1: [], a2: [], a3: []};
 
             for (let j = 0; j < solutions.length; j++) {
                 ['a0', 'a1', 'a2', 'a3'].forEach((param, index) => {
                     curve[param].push(solutions[j].curves[i][param]);
                 });
             }
+
+            // t should be the same for each dimension
+            curve.t.push(solutions[0].curves[i].t);
 
             solution.curves.push(curve);
         }
@@ -366,6 +444,7 @@ interface Curve1D {
     a1: number;
     a2: number;
     a3: number;
+    t: number;
     [key: string]: number;
 }
 
@@ -374,6 +453,7 @@ interface Curve {
     a1: number[];
     a2: number[];
     a3: number[];
+    t: number[];
     [key: string]: number[];
 }
 

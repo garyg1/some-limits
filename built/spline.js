@@ -16,9 +16,14 @@ var Point = (function () {
 }());
 var Spline = (function () {
     function Spline() {
+        this.VELOCITY = 0.01;
+        this.useConstVelocity = true;
         this.points = [];
         this.spline = { curves: [] };
     }
+    Spline.prototype.setUseConstVelocity = function (newVal) {
+        this.useConstVelocity = newVal;
+    };
     Spline.prototype.addPoint = function (i, j) {
         i = Math.floor(i);
         j = Math.floor(j);
@@ -116,7 +121,7 @@ var Spline = (function () {
                 var computedRoots = findRoots([k1, k2 * 2, k3 * 3, k4 * 4, k5 * 5, k6 * 6]);
                 for (var i = 0; i < computedRoots[0].length; i++) {
                     if (Math.abs(computedRoots[1][i]) < TOLERANCE
-                        && computedRoots[0][i] >= 0 && computedRoots[0][i] <= 1) {
+                        && computedRoots[0][i] >= 0 && computedRoots[0][i] <= curve.t[0]) {
                         pointsToCheck.push(computedRoots[0][i]);
                     }
                 }
@@ -192,7 +197,49 @@ var Spline = (function () {
         }
         var solution = { curves: [] };
         for (var i = 0; i < n; i++) {
-            solution.curves.push({ a0: a[i], a1: b[i], a2: c[i], a3: d[i] });
+            solution.curves.push({ t: 1, a0: a[i], a1: b[i], a2: c[i], a3: d[i] });
+        }
+        return solution;
+    };
+    Spline.prototype.solveCurveConstVelocity = function (index) {
+        var pts = this.points;
+        var n = pts.length - 1;
+        var a = new Array(n + 1);
+        for (var i = 0; i < n + 1; i++) {
+            a[i] = pts[i][index];
+        }
+        var b = new Array(n);
+        var d = new Array(n);
+        var h = new Array(n);
+        for (var i = 0; i < n; i++) {
+            h[i] = pts[i].dist(pts[i + 1]) * this.VELOCITY;
+        }
+        var r = new Array(n);
+        for (var i = 0; i < n; i++) {
+            if (i == 0)
+                r[i] = 3 * (a[1] - a[0]) / h[i];
+            else
+                r[i] = 3 * (a[i + 1] - a[i]) / h[i] - 3 * (a[i] - a[i - 1]) / h[i - 1];
+        }
+        var cp = new Array(n + 1);
+        var dp = new Array(n + 1);
+        cp[0] = 0;
+        dp[0] = 0;
+        for (var i = 1; i < n; i++) {
+            var denom = 2 * (h[i] + h[i - 1]) - h[i] * cp[i - 1];
+            cp[i] = h[i] / denom;
+            dp[i] = (r[i] - h[i - 1] * dp[i - 1]) / denom;
+        }
+        var c = new Array(n + 1);
+        c[n] = 0;
+        for (var j = n - 1; j >= 0; j--) {
+            c[j] = dp[j] - cp[j] * c[j + 1];
+            b[j] = (a[j + 1] - a[j]) / h[j] - h[j] * (c[j + 1] + 2 * c[j]) / 3;
+            d[j] = (c[j + 1] - c[j]) / 3 / h[j];
+        }
+        var solution = { curves: [] };
+        for (var i = 0; i < n; i++) {
+            solution.curves.push({ t: h[i], a0: a[i], a1: b[i], a2: c[i], a3: d[i] });
         }
         return solution;
     };
@@ -203,11 +250,14 @@ var Spline = (function () {
         var numCurves = this.points.length - 1;
         var solutions = [];
         ['i', 'j'].forEach(function (index) {
-            solutions.push(_this.solveCurve(index));
+            if (_this.useConstVelocity)
+                solutions.push(_this.solveCurveConstVelocity(index));
+            else
+                solutions.push(_this.solveCurve(index));
         });
         var solution = { curves: [] };
         var _loop_1 = function (i) {
-            var curve = { a0: [], a1: [], a2: [], a3: [] };
+            var curve = { t: [], a0: [], a1: [], a2: [], a3: [] };
             var _loop_2 = function (j) {
                 ['a0', 'a1', 'a2', 'a3'].forEach(function (param, index) {
                     curve[param].push(solutions[j].curves[i][param]);
@@ -216,6 +266,7 @@ var Spline = (function () {
             for (var j = 0; j < solutions.length; j++) {
                 _loop_2(j);
             }
+            curve.t.push(solutions[0].curves[i].t);
             solution.curves.push(curve);
         };
         for (var i = 0; i < numCurves; i++) {

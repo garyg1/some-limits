@@ -15,6 +15,8 @@ var highlightedColor = 'rgba(255, 255, 255, 0.5)';
 var selectedColor = 'rgba(255, 255, 255, 0.5)';
 var splineColor = 'white';
 var selectedSplineColor = 'rgba(255, 255, 255, 0.5)';
+var velocityButton;
+var useConstVelocity = true;
 var spline = new Spline();
 window.onload = function () {
     canvas = document.getElementById('canvas');
@@ -49,6 +51,8 @@ window.onload = function () {
     showButton.addEventListener("click", showHideMenu);
     var clearButton = document.getElementById("clear");
     clearButton.addEventListener("click", clear);
+    velocityButton = document.getElementById("velocity");
+    velocityButton.addEventListener("click", toggleVelocity);
     requestAnimationFrame(draw);
 };
 function showHideMenu() {
@@ -59,6 +63,13 @@ function showHideMenu() {
     else {
         menu.classList.remove("hidden");
     }
+}
+function toggleVelocity() {
+    velocityButton.classList.toggle('pressed');
+    useConstVelocity = !useConstVelocity;
+    spline.setUseConstVelocity(useConstVelocity);
+    spline.setcurve();
+    window.requestAnimationFrame(draw);
 }
 function onMouseDown(event) {
     handleMouseDown(event.offsetX, event.offsetY, event.buttons);
@@ -190,7 +201,7 @@ function drawLine(solution) {
         }
         var curve = solution.curves[n];
         var dt = 0;
-        for (var t = 0; t < 1; t += dt) {
+        for (var t = 0; t < curve.t[0]; t += dt) {
             var i = curve.a0[0] + curve.a1[0] * t
                 + curve.a2[0] * t * t + curve.a3[0] * t * t * t;
             var j = curve.a0[1] + curve.a1[1] * t
