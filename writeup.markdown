@@ -33,7 +33,7 @@ There are basically no restrictions on our choice of \\( t_i \\)s (except that \
 
 We have a couple nice options for our \\( t_i \\)s. 
 
-1. We can choose \\( t_0 = 0, t_1 = 1, ... , t_n = n \\). This choice of evenly spaced \\( t_i \\)s simplifies some of the spline calculations. Also, the generated spline will be the only "smooth" (continuous velocity and acceleration) way to travel through exactly one \\( r_i \\) each second.
+1. We can choose \\( t_0 = 0, t_1 = 1, ... , t_n = n \\). This choice of evenly spaced \\( t_i \\)s simplifies some of the spline calculations. Also, the generated spline will be a "smooth" (continuous velocity and acceleration) way to travel through exactly one \\( r_i \\) each second.
 
 2. We can choose our \\( t_i \\)s to be proportional to the distance between \\( r_i \\) and \\( r_{i+1} \\). This choice means the spline will have relatively constant "velocity", and the resulting spline is a very smooth-looking interpolation of \\( r_0, r_1, ..., r_n \\). 
 
