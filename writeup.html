@@ -32,7 +32,7 @@
 <p>There are basically no restrictions on our choice of \( t_i \)s (except that \( t_i &lt; t_{i+1} \)). And our choice of \( t_i \) dramatically affects the parametric natural spline we get.</p>
 <p>We have a couple nice options for our \( t_i \)s.</p>
 <ol type="1">
-<li><p>We can choose \( t_0 = 0, t_1 = 1, ... , t_n = n \). This choice of evenly spaced \( t_i \)s simplifies some of the spline calculations.</p></li>
+<li><p>We can choose \( t_0 = 0, t_1 = 1, ... , t_n = n \). This choice of evenly spaced \( t_i \)s simplifies some of the spline calculations. Also, the generated spline will be the only &quot;smooth&quot; (continuous velocity and acceleration) way to travel through exactly one \( r_i \) each second.</p></li>
 <li><p>We can choose our \( t_i \)s to be proportional to the distance between \( r_i \) and \( r_{i+1} \). This choice means the spline will have relatively constant &quot;velocity&quot;, and the resulting spline is a very smooth-looking interpolation of \( r_0, r_1, ..., r_n \).</p></li>
 </ol>
 <p>I implemented both of these -- you can use the <code>velocity</code> toggle to switch between options 1 and 2 (option 2 is the default).</p>
