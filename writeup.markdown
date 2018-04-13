@@ -4,7 +4,7 @@ title: "Building a fast spline editor with HTML5"
 
 This is a write-up for a HTML5 Canvas spline-drawing program.
 
-You can check it out [here](http://garygurlaskie.com/some-limits/splines.html).
+You can check it out [here](http://garygurlaskie.com/some-limits/).
 
 ## Cubic splines
 
