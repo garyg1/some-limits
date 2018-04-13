@@ -8,7 +8,7 @@ tags: splines HTML5
 
 This is a write-up for a thing I made.
 
-You can check it out [here](http://garygurlaskie.com/some-limits).
+You can check it out [here](http://garygurlaskie.com/some-limits/splines.html).
 
 ## Cubic splines
 
