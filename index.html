@@ -1,25 +1,172 @@
-<!doctype <!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>splines</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" media="screen" href="styles.css" />
-    <script defer src="https://use.fontawesome.com/releases/v5.0.10/js/all.js" integrity="sha384-slN8GvtUJGnv6ca26v8EzVaR9DC58QEwsIk9q1QXdCU8Yu8ck/tL/5szYlBbqmS+" crossorigin="anonymous"></script>
-    <script src="built/roots.js"></script>
-    <script src="built/spline.js"></script>
-    <script src="built/index.js"></script>
-</head>
-<body>
-    <div class="title" id="menu">
-        <h1>splines</h1>
-        <div class="button-row">
-            <button id="hide"><i class="fa fa-angle-left"></i></button>
-            <button id="show"><i class="fa fa-angle-right"></i></button> 
-            <button id="clear">clear</button>
-        </div>
+
+<title>Building a fast spline editor with HTML5</title>
+<meta name="generator" content="Jekyll v3.7.3" />
+    <link rel="stylesheet" href="/assets/css/style.css?v=">
+    <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1><a href="/">Gary Gurlaskie</a></h1>
+        
+        
+
+        <p></p>
+
+        
+
+        
+
+        
+      </header>
+      <section>
+
+<small>11 April 2018</small>
+<h1>Building a fast spline editor with HTML5</h1>
+
+<p>This is a write-up for a thing I made.</p>
+
+<p>You can check it out <a href="http://garygurlaskie.com/some-limits/splines.html">here</a>.</p>
+
+<h2 id="cubic-splines">Cubic splines</h2>
+
+<p>If you already know what a cubic spline is, there’s nothing new in this section.</p>
+<h3 id="definition">Definition</h3>
+
+<p>Given points \( (t_0, x_0), (t_1, x_1), …, (t_n, x_n) \), a <strong>cubic spline</strong>  is a piecewise cubic polynomial \( f(t) \) that passes through each \( (t_i, x_i) \) pair, and has the property that \( f \), \( f’ \), and \( f^{\prime\prime} \) are continuous on \( [t_0, t_n] \).</p>
+
+<h3 id="uniqueness">Uniqueness</h3>
+<p>For any set of points, there are many different cubic splines that interpolate them.</p>
+
+<p>Cubic splines have \( 4n \) coefficients, but there are only \( 4n - 2 \) constraints on their coefficients. We will impose two more constraints, and then we can uniquely define a “natural” cubic spline from the control points.</p>
+
+<h3 id="natural-splines">Natural Splines</h3>
+
+<p>A <strong>natural cubic spline</strong> is a cubic spline that also satisfies the condition that \( f^{\prime\prime}(t_1) = f^{\prime\prime}(t_n) = 0 \).</p>
+
+<h2 id="implementation">Implementation</h2>
+
+<h3 id="parametric-splines">Parametric Splines</h3>
+
+<p><strong>The problem:</strong> Given a set of points \( r_0 = (x_0, y_0), r_1 = (x_1, y_1), … , r_n = (x_n, y_n) \), we want to construct a spline that interpolates them <em>in order</em>.</p>
+
+<p>We can’t do this with splines in a single dimension. So we parameterize, and consider a parametric function \( f(t) = (x(t), y(t)) \) that interpolates \( (0, r_0), (1, r_1), … , (n, r_n) \). You can show that if \( x(t) \) and \( y(t) \) are splines for \( \{(i, x_i)\} \) and \( \{(i, y_i)\} \), then \( f(t) \) will be a spline for \( \{(i, r_i)\} \).</p>
+
+<h3 id="finding-the-closest-spline-segment-to-a-point">Finding the closest spline segment to a point</h3>
+
+<p><strong>The problem:</strong> Given a point \( (x, y) \) and a parametric cubic spline \( f(t) = (x(t), y(t))\), find the segment of the spline \( (x, y) \) is closest to.</p>
+
+<p>Since splines are continuous, we can just apply basic optimization techniques:</p>
+
+<ol>
+  <li>For each spline segment \( f_i \), find the critical points of the distance \( D_i(t) \).</li>
+  <li>The critical point \(s\) with the smallest \( D_i(s) \) is the absolute minimum for this spline.</li>
+  <li>Choose the spline segment with the smallest minimum distance.</li>
+</ol>
+
+<p>But we run into a problem: the squared distance from a cubic function to a point is a sixth degree polynomial, so the derivative is a fifth degree polynomial. There is no explicit formula!</p>
+
+<p>We must choose an iterative method to find the roots. An simple and interesting one is called Durand-Kerner, which finds all five roots simultaneously. Some of the roots will be complex numbers.</p>
+
+<h4 id="the-durand-kerner-method">The Durand-Kerner method</h4>
+
+<p>The method comes from the observation that</p>
+
+<script type="math/tex; mode=display">P(x) = (x - r_1)(x - r_2)(x - r_3)(x - r_4)(x - r_5)</script>
+
+<p>implies</p>
+
+<script type="math/tex; mode=display">r_1 = x + \frac {P(x)} {(x - r_2)(x - r_3)(x - r_4)(x - r_5)}</script>
+
+<p>Then, we perform a fixed point iteration to solve for all five roots simultaneously. We choose initial values \( a_0, b_0,…, e_0 \in C \). Then we compute</p>
+
+<script type="math/tex; mode=display">a_{i + 1} = a_i + \frac {P(a_i)} {(a_i - b_i)(a_i - c_i)(a_i - d_i)(a_i - e_i)}</script>
+
+<script type="math/tex; mode=display">b_{i + 1} = b_i + \frac {P(b_i)} {(b_i - a_i)(b_i - c_i)(b_i - d_i)(b_i - e_i)}</script>
+
+<script type="math/tex; mode=display">...</script>
+
+<script type="math/tex; mode=display">e_{i + 1} = e_i + \frac {P(e_i)} {(e_i - a_i)(e_i - b_i)(e_i - c_i)(e_i - d_i)}</script>
+
+<p>until \( |a_{i+1} - a_i| &lt; \epsilon \), \( |b_{i+1} - b_i| &lt; \epsilon \), \(…\), and \( |e_{i+1} - e_i| &lt; \epsilon \) for some tolerance \( \epsilon \).</p>
+
+<p>The <a href="https://en.wikipedia.org/wiki/Durand%E2%80%93Kerner_method">Wikipedia article</a> is a pretty good read.</p>
+
+<h4 id="other-methods">Other methods</h4>
+
+<p>I read an <a href="http://homepage.divms.uiowa.edu/~atkinson/ftp/CurvesAndSufacesClosestPoint.pdf">interesting paper</a> about using an ensemble method to solve this problem. The authors were using cubic splines to model roads for a driving simulator, and wanted to know where the vehicle was on the road given the \((x, y, z) \) coordinates.</p>
+
+<h3 id="drawing-the-curve">Drawing the curve</h3>
+
+<p><strong>The problem:</strong> Graph a cubic spline continuously on a grid of pixels.</p>
+
+<p>In other words, we want to find \( 0 = t_1 &lt; t_2 &lt; … &lt; t_{k-1} &lt; t_k = 1\) such that, if we plot the points \( f(t_1), f(t_2), …, f(t_k) \) as 1x1 squares, the squares will be connected.</p>
+
+<p><strong>My Solution:</strong> We will use an adaptive algorithm to find the \( t_i \).</p>
+
+<p>Let’s impose an additional restriction – if we have for all \( 1 \le t \le k \) that</p>
+
+<script type="math/tex; mode=display">\max(|x(t_{i+1}) - x(t_i)|, |y(t_{i+1}) - y(t_i)|) = 1</script>
+
+<p>then our set of squares will certainly be adjacent.</p>
+
+<p>Let’s approximate</p>
+
+<script type="math/tex; mode=display">x(t_{i+1}) \approx x(t_i) + x'(t_i) (t_{i+1} - t_i)</script>
+
+<p>so we have that</p>
+
+<script type="math/tex; mode=display">1 \approx |x'(t_i) (t_{i+1} - t_i)|</script>
+
+<p>and</p>
+
+<script type="math/tex; mode=display">t_{i+1} \approx t_1 + \frac {1}{|x'(t_i)|}</script>
+
+<p>and by the same argument for \( y(t) \), we have</p>
+
+<script type="math/tex; mode=display">t_{i+1} \approx t_1 + \min(\frac {1}{|x'(t_i)|}, \frac{1}{|y'(t_i)|})</script>
+
+<p>This is exactly how I pick my points to graph.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="kd">let</span> <span class="nx">dt</span><span class="p">:</span> <span class="nx">number</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">for</span> <span class="p">(</span><span class="kd">let</span> <span class="nx">t</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">t</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">t</span> <span class="o">+=</span> <span class="nx">dt</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// evaulate x(t), y(t), x'(t), y'(t)...</span>
+    
+    <span class="c1">// update t using adaptive algorithm</span>
+    <span class="nx">dt</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">min</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">abs</span><span class="p">(</span><span class="nx">dx</span><span class="p">),</span> <span class="mi">1</span> <span class="o">/</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">abs</span><span class="p">(</span><span class="nx">dy</span><span class="p">));</span>
+
+    <span class="c1">// plot the point</span>
+    <span class="nx">putPixel</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="p">,</span> <span class="nx">color</span><span class="p">);</span>
+<span class="p">}</span></code></pre></figure>
+
+<p>This is fast enough to be smooth on my Nexus 5, and looks pretty good.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>I had a lot of fun building this, and I got to learn about a simultaneous root-finding algorithm and I got to figure out a decent way to do adaptive polynomial graphing. If you have any comments or think I could have done it better, <a href="mailto:garygurlaskie@gmail.com">I’d love to hear</a>.</p>
+
+
+
+  <small>tags: <em>splines</em> - <em>HTML5</em></small>
+
+
+
+      </section>
+      <footer>
+        
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
     </div>
-    <canvas id="canvas"></canvas>
-</body>
+    <script src="/assets/js/scale.fix.js"></script>
+    
+  </body>
 </html>
