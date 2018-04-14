@@ -10,7 +10,7 @@ You can check out the demo [here](http://garygurlaskie.com/some-limits/), and yo
 
 ### Definition
 
-Given points \\( (t_0, x_0), (t_1, x_1), ..., (t_n, x_n) \\), a __cubic spline__  is a piecewise cubic polynomial \\( f(t) \\) that passes through each \\( (t_i, x_i) \\) pair, and has the property that \\( f \\), \\( f' \\), and \\( f^{\prime\prime} \\) are continuous on \\( [t_0, t_n] \\).
+Given points \\( (t_0, x_0), (t_1, x_1), ..., (t_n, x_n) \\), a __cubic spline__  is a piecewise cubic polynomial \\( f(t) \\) that passes through each \\( (t_i, x_i) \\) pair, and has the property that \\( f \\), \\( f' \\), and \\( f^{\\prime\\prime} \\) are continuous on \\( [t_0, t_n] \\).
 
 ### Uniqueness
 For any set of points, there are many different cubic splines that interpolate them.
@@ -19,7 +19,7 @@ Cubic splines have \\( 4n \\) coefficients, but there are only \\( 4n - 2 \\) co
 
 ### Natural Splines
 
-A __natural cubic spline__ is a cubic spline that also satisfies the condition that \\( f^{\prime\prime}(t_0) = f^{\prime\prime}(t_n) = 0 \\).
+A __natural cubic spline__ is a cubic spline that also satisfies the condition that \\( f^{\\prime\\prime}(t_0) = f^{\\prime\\prime}(t_n) = 0 \\).
 
 ## Implementation
 
@@ -73,7 +73,7 @@ $$ ... $$
 
 $$ e_{i + 1} = e_i + \frac {P(e_i)} {(e_i - a_i)(e_i - b_i)(e_i - c_i)(e_i - d_i)}$$
 
-until \\( \|a_{i+1} - a_i\| < \\epsilon \\), \\( \|b_{i+1} - b_i\| < \\epsilon \\), \\(...\\), and \\( \|e_{i+1} - e_i\| < \\epsilon \\) for some tolerance \\( \epsilon \\). 
+until \\( \|a_{i+1} - a_i\| < \\epsilon \\), \\( \|b_{i+1} - b_i\| < \\epsilon \\), \\(...\\), and \\( \|e_{i+1} - e_i\| < \\epsilon \\) for some tolerance \\( \\epsilon \\). 
 
 The [Wikipedia article](https://en.wikipedia.org/wiki/Durand%E2%80%93Kerner_method) is a pretty good read.
 

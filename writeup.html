@@ -19,12 +19,12 @@
 <p>You can check out the demo <a href="http://garygurlaskie.com/some-limits/">here</a>, and you can find the source code <a href="https://github.com/garyg1/some-limits/tree/master/src">here</a>.</p>
 <h2 id="cubic-splines">Cubic splines</h2>
 <h3 id="definition">Definition</h3>
-<p>Given points \( (t_0, x_0), (t_1, x_1), ..., (t_n, x_n) \), a <strong>cubic spline</strong> is a piecewise cubic polynomial \( f(t) \) that passes through each \( (t_i, x_i) \) pair, and has the property that \( f \), \( f' \), and \( f^{} \) are continuous on \( [t_0, t_n] \).</p>
+<p>Given points \( (t_0, x_0), (t_1, x_1), ..., (t_n, x_n) \), a <strong>cubic spline</strong> is a piecewise cubic polynomial \( f(t) \) that passes through each \( (t_i, x_i) \) pair, and has the property that \( f \), \( f' \), and \( f^{\prime\prime} \) are continuous on \( [t_0, t_n] \).</p>
 <h3 id="uniqueness">Uniqueness</h3>
 <p>For any set of points, there are many different cubic splines that interpolate them.</p>
 <p>Cubic splines have \( 4n \) coefficients, but there are only \( 4n - 2 \) constraints on their coefficients. We will impose two more constraints, and then we can uniquely define a &quot;natural&quot; cubic spline from the control points.</p>
 <h3 id="natural-splines">Natural Splines</h3>
-<p>A <strong>natural cubic spline</strong> is a cubic spline that also satisfies the condition that \( f^{}(t_0) = f^{}(t_n) = 0 \).</p>
+<p>A <strong>natural cubic spline</strong> is a cubic spline that also satisfies the condition that \( f^{\prime\prime}(t_0) = f^{}(t_n) = 0 \).</p>
 <h2 id="implementation">Implementation</h2>
 <h3 id="parametric-splines">Parametric Splines</h3>
 <p><strong>The problem:</strong> Given a set of points \( r_0 = (x_0, y_0), r_1 = (x_1, y_1), ... , r_n = (x_n, y_n) \), we want to construct a spline that interpolates them <em>in order</em>.</p>
