@@ -51,7 +51,7 @@ Since splines are continuous, we can just apply basic optimization techniques:
 
 But we run into a problem: the squared distance from a cubic function to a point is a sixth degree polynomial, so the derivative is a fifth degree polynomial. There is no explicit formula! 
 
-We must choose an iterative method to find the roots. An simple and interesting one is called Durand-Kerner, which finds all five roots simultaneously. Some of the roots will be complex numbers.
+We will choose an iterative method to find the roots. An simple and interesting one is called Durand-Kerner, which finds all five roots simultaneously. Some of the roots will be complex numbers -- we will discard these.
 
 #### The Durand-Kerner method
 
@@ -63,7 +63,7 @@ implies
 
 $$ r_1 = x + \frac {P(x)} {(x - r_2)(x - r_3)(x - r_4)(x - r_5)}$$
 
-Then, we perform a fixed point iteration to solve for all five roots simultaneously. We choose initial values \\( a_0, b_0,..., e_0 \in C \\). Then we compute
+Then, we perform a fixed point iteration to solve for all five roots simultaneously. We choose initial values \\( a_0, b_0,..., e_0 \\in C \\). Then we compute
 
 $$ a_{i + 1} = a_i + \frac {P(a_i)} {(a_i - b_i)(a_i - c_i)(a_i - d_i)(a_i - e_i)}$$
 
@@ -95,19 +95,23 @@ $$ \max(|x(t_{i+1}) - x(t_i)|, |y(t_{i+1}) - y(t_i)|) = 1$$
 
 then our set of squares will certainly be adjacent. 
 
-Let's approximate 
+Let's consider just the \\( x \\)-dimension. We want to find a \\( t_{i+1} \\) such that
+
+$$ |x(t_{i+1}) - x(t_i)| = 1 $$
+
+If we approximate \\( x(t_{i+1}) \\) from \\( x(t_i) \\) using
 
 $$ x(t_{i+1}) \approx x(t_i) + x'(t_i) (t_{i+1} - t_i)$$
 
-so we have that 
+then we have that 
 
-$$ 1 \approx |x'(t_i) (t_{i+1} - t_i)|$$
+$$ |x'(t_i) (t_{i+1} - t_i)| \approx |x(t_{i+1}) - x(t_i)| = 1$$
 
 and 
 
 $$ t_{i+1} \approx t_1 + \frac {1}{|x'(t_i)|}$$
 
-and by the same argument for \\( y(t) \\), we have
+and by the same argument for \\( y(t) \\), we have that the optimal \\( t_{i+1} \\) can be approximated with
 
 $$ t_{i+1} \approx t_1 + \min(\frac {1}{|x'(t_i)|}, \frac{1}{|y'(t_i)|})$$
 

@@ -45,13 +45,13 @@
 <li>Choose the spline segment with the smallest minimum distance.</li>
 </ol>
 <p>But we run into a problem: the squared distance from a cubic function to a point is a sixth degree polynomial, so the derivative is a fifth degree polynomial. There is no explicit formula!</p>
-<p>We must choose an iterative method to find the roots. An simple and interesting one is called Durand-Kerner, which finds all five roots simultaneously. Some of the roots will be complex numbers.</p>
+<p>We will choose an iterative method to find the roots. An simple and interesting one is called Durand-Kerner, which finds all five roots simultaneously. Some of the roots will be complex numbers -- we will discard these.</p>
 <h4 id="the-durand-kerner-method">The Durand-Kerner method</h4>
 <p>The method comes from the observation that</p>
 <p><span class="math display">\[ P(x) = (x - r_1)(x - r_2)(x - r_3)(x - r_4)(x - r_5) \]</span></p>
 <p>implies</p>
 <p><span class="math display">\[ r_1 = x + \frac {P(x)} {(x - r_2)(x - r_3)(x - r_4)(x - r_5)}\]</span></p>
-<p>Then, we perform a fixed point iteration to solve for all five roots simultaneously. We choose initial values \( a_0, b_0,..., e_0 C \). Then we compute</p>
+<p>Then, we perform a fixed point iteration to solve for all five roots simultaneously. We choose initial values \( a_0, b_0,..., e_0 \in C \). Then we compute</p>
 <p><span class="math display">\[ a_{i + 1} = a_i + \frac {P(a_i)} {(a_i - b_i)(a_i - c_i)(a_i - d_i)(a_i - e_i)}\]</span></p>
 <p><span class="math display">\[ b_{i + 1} = b_i + \frac {P(b_i)} {(b_i - a_i)(b_i - c_i)(b_i - d_i)(b_i - e_i)}\]</span></p>
 <p><span class="math display">\[ ... \]</span></p>
@@ -67,13 +67,15 @@
 <p>Let's impose an additional restriction -- if we have for all \( 1 \le t \le k \) that</p>
 <p><span class="math display">\[ \max(|x(t_{i+1}) - x(t_i)|, |y(t_{i+1}) - y(t_i)|) = 1\]</span></p>
 <p>then our set of squares will certainly be adjacent.</p>
-<p>Let's approximate</p>
+<p>Let's consider just the \( x \)-dimension. We want to find a \( t_{i+1} \) such that</p>
+<p><span class="math display">\[ |x(t_{i+1}) - x(t_i)| = 1 \]</span></p>
+<p>If we approximate \( x(t_{i+1}) \) from \( x(t_i) \) using</p>
 <p><span class="math display">\[ x(t_{i+1}) \approx x(t_i) + x&#39;(t_i) (t_{i+1} - t_i)\]</span></p>
-<p>so we have that</p>
-<p><span class="math display">\[ 1 \approx |x&#39;(t_i) (t_{i+1} - t_i)|\]</span></p>
+<p>then we have that</p>
+<p><span class="math display">\[ |x&#39;(t_i) (t_{i+1} - t_i)| \approx |x(t_{i+1}) - x(t_i)| = 1\]</span></p>
 <p>and</p>
 <p><span class="math display">\[ t_{i+1} \approx t_1 + \frac {1}{|x&#39;(t_i)|}\]</span></p>
-<p>and by the same argument for \( y(t) \), we have</p>
+<p>and by the same argument for \( y(t) \), we have that the optimal \( t_{i+1} \) can be approximated with</p>
 <p><span class="math display">\[ t_{i+1} \approx t_1 + \min(\frac {1}{|x&#39;(t_i)|}, \frac{1}{|y&#39;(t_i)|})\]</span></p>
 <p>If the first-derivative approximation for \( x(t_{i+1}) \) is close (which it usually is), the \( t_i \) generated will give us connected squares. Even better, the number of \( t_i \) generated will be close to the minimal number of \( t_i \) that still give us connected squares (since our \( t_i \) were chosen so that \( \max(\Delta x, \Delta y) \) = 1)</p>
 <p>Here is the code for the adaptive step-size.</p>
