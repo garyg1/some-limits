@@ -1,8 +1,8 @@
 html, body {
-    background-color: black;
+    background-color: #222222;
     padding: 0;
     margin: 0;
-    color: white;
+    color: #222222;
     font-family: sans-serif;
 }
 
@@ -10,11 +10,9 @@ html, body {
     position: fixed;
     left: 20px;
     top: 20px;
-    /* transform: translateX(-50%); */
     padding: 15px;
-    background-color: black;
+    background-color: white;
     text-align: center;
-    border-radius: 10px;
     max-width: calc(100% - 70px);
 }
 
@@ -47,25 +45,20 @@ h1 {
 }
 
 .button, button {
-    background-color: rgba(255, 255, 255, 0);
+    background-color: white;
     outline: none;
     border: none;
-    padding: 10px 15px;
-    border-radius: 4px;
-    color: white;
+    padding: 10px;
+    border-radius: 999px;
+    color: #222222;
     font-size: 100%;
     text-decoration: none;
 }
 button.pressed {
-    background-color: rgba(255, 255, 255, 0.925);
-    color: black;
+    background-color: #222222;
+    color: white;
 }
-
-button.pressed:hover {
-    background-color: white;
-}
-
 .button:hover, button:hover {
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(0, 0, 0, 0.3);
 }
 
