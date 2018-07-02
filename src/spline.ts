@@ -177,8 +177,13 @@ class Spline {
         // iterate through each spline segment, 
         // and calculate min distance from segment to Point(x, y)
         this.spline.curves.forEach((curve, index) => {
+            
+            // minimize dist(curve(t), point)^2
            
-            // calculate constants in square distance formula
+            // calculate constants in squared-distance formula
+            // i.e., dist^2 = k0 + k1*t + k2*t^2 + ... + k6*t^6
+            // The expressions for the constants k0,...,k6 can be derived in 
+            // a straighforward manner.
             let k0: number, k1: number, k2: number, k3: number;
             let k4: number, k5: number, k6: number;
 
@@ -197,10 +202,14 @@ class Spline {
                 k0 += Math.pow(a0[d], 2);
             }
 
-            // 'differentiate' and find roots
+            // t-values of candidate minimums
+            // t=0 and t=1 are always candidates
+            // the others are the critical points of dist^2
             const pointsToCheck = [0, 1];
             
-            // if just a line, the min is just -k1 / (2*k2)
+            // if segment is just a line (k3 == ... == k6 == 0)
+            // then the min is just -k1 / (2*k2)
+            // no need to use durand-kerner
             if (k3 == k4 && k4 == k5 && k5 == k6 && k6 == 0) {
                 const t: number = -0.5 * k1 / k2 ;
                 if (t <= 1 && t >= 0) {
@@ -208,19 +217,24 @@ class Spline {
                 }
             }
             
-            // otherwise compute critical points with
-            // durand kerner
+            // otherwise compute critical points with durand kerner
             else {
+                // "differentiate" and find roots using durand-kerner
                 const computedRoots = findRoots([k1, k2*2, k3*3, k4*4, k5*5, k6*6]);
+                
+                // filter out roots that are not t \in [0,1]
                 for (let i = 0; i < computedRoots[0].length; i++) {
+                    
                     // if imaginary part is less than TOLERANCE
                     if (Math.abs(computedRoots[1][i]) < TOLERANCE
-                        && computedRoots[0][i] >= 0 && computedRoots[0][i] <= curve.t[0]) {
+                        && computedRoots[0][i] >= 0 
+                        && computedRoots[0][i] <= curve.t[0]) {
                         pointsToCheck.push(computedRoots[0][i]);
                     }
                 }
             }
 
+            // test candidate points, and find absolute minimum for t \in [0,1]
             let localMin: number = Number.MAX_VALUE;
             for (let i = 0; i < pointsToCheck.length; i++) {
                 const t: number = pointsToCheck[i];
@@ -233,12 +247,17 @@ class Spline {
                 }
             }
 
+            // check if this curve is currently the closest
             if (localMin < minDistSq) {
                 minDistSq = localMin;
                 minCurveIndex = index;
             }
         });
 
+        // create a new point and insert it into the minimal segment
+        
+        // first check if click was off the edge of the first/last segment
+        // if so, add a point to the beginning/end of the entire spline
         if (minCurveIndex == 0) {
             if (this.points[0].dist(new Point(x, y)) <= 1 + Math.pow(minDistSq, 0.5)) {
                 minCurveIndex = -2;
@@ -249,6 +268,7 @@ class Spline {
             }
         }
 
+        // otherwise insert into minimal segment
         if (minDistSq < Math.pow(MAX_DIST, 2)) {
             return {index: minCurveIndex, dist: Math.pow(minDistSq, 0.5)};
         } else {
@@ -262,6 +282,7 @@ class Spline {
      * @returns {Array} Solution A n-1 tuple of [const coeff, linear coeff, quad coeff, cubic coeff] for each interval in spline.
      */
     solveCurve(index: string): Solution1D {
+        // documentation for this spline-finding algorithm can be found on Wikipedia
         var pts: Array<Point> = this.points;
         let n = pts.length - 1; // there are n+1 points
         
