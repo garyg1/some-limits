@@ -14,7 +14,7 @@ let menu: HTMLElement;
 const pointRadius: number = 8;
 const distThresh: number = 40;
 
-const backgroundColor: string = 'seagreen';
+const backgroundColor: string = '#111';
 
 const pointColor: string = 'rgba(255, 255, 255, 1)';
 const highlightedColor: string = 'rgba(255, 255, 255, 0.5)';

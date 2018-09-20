@@ -1,9 +1,9 @@
 html, body {
-    background-color: #222222;
+    background-color: black;
     padding: 0;
     margin: 0;
-    color: #222222;
-    font-family: sans-serif;
+    color: black;
+    font-family: monospace;
 }
 
 .title {
@@ -12,7 +12,6 @@ html, body {
     top: 20px;
     padding: 15px;
     background-color: white;
-    border-radius: 10px;
     text-align: center;
     max-width: calc(100% - 70px);
 }
@@ -21,12 +20,13 @@ html, body {
     display: none;
 }
 
-.title.hidden > h1, .title.hidden > p, .title.hidden button, .title.hidden .button {
+.title.hidden > h2, .title.hidden > p, .title.hidden button, .title.hidden .button {
     display: none;
 }
 
 .title.hidden {
     padding: 0px;
+    border-radius: 10px;
 }
 
 .title.hidden #show {
@@ -37,29 +37,28 @@ html, body {
     padding: 10px;
 }
 
-p {
-    margin: 4px;
+.title p {
+    margin: 8px;
 }
 
-h1 {
+.title h1 {
     margin: 8px;
 }
 
 .button, button {
-    background-color: white;
+    background-color: transparent;
     outline: none;
     border: none;
     padding: 10px;
-    border-radius: 999px;
-    color: #222222;
-    font-size: 100%;
+    color: #222;
     text-decoration: none;
+    font-family: monospace;
 }
 button.pressed {
     background-color: #222222;
     color: white;
 }
 .button:hover, button:hover {
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
