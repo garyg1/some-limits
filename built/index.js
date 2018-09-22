@@ -9,7 +9,7 @@ var menuHidden = false;
 var menu;
 var pointRadius = 8;
 var distThresh = 40;
-var backgroundColor = '#111';
+var backgroundColor = '#18e';
 var pointColor = 'rgba(255, 255, 255, 1)';
 var highlightedColor = 'rgba(255, 255, 255, 0.5)';
 var selectedColor = 'rgba(255, 255, 255, 0.5)';
