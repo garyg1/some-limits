@@ -14,3 +14,5 @@ tsc
 ### Documentation
 I go through some of the algorithms I used in the writeup, found [here](http://garygurlaskie.com/splines/writeup.html).
 
+### Demo
+You can view a demo video [here](/demo.mp4).
