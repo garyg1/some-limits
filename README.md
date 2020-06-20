@@ -12,7 +12,7 @@ tsc
 ```
 
 ### Documentation
-I go through some of the algorithms I used in the writeup, found [here](http://garygurlaskie.com/splines/writeup.html).
+I go through some of the algorithms I used in the writeup, found [here](https://garygurlaskie.com/ctf/2018/04/18/splines.html).
 
 ### Demo
 You can view a demo video [here](/demo.mp4).
